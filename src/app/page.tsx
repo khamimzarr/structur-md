@@ -2,6 +2,7 @@
 
 /* eslint-disable react-hooks/refs -- reveal uses callback refs intentionally */
 import { useState, useRef, useEffect, useCallback } from "react";
+import { PwaEnhancer } from "./pwa-enhancer";
 
 // ---------- tipe respons dari /api/scrape ----------
 interface ScrapeResponse {
@@ -148,6 +149,21 @@ export default function Home() {
   const howReveal = useReveal(true);
   const histReveal = useReveal(true);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // share target: prefill from PWA ?url= / ?text=
+  const handleIncomingUrl = useCallback((incoming: string) => {
+    setUrl(incoming);
+    // focus input
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
+  useEffect(() => {
+    const h = (e: Event) => {
+      const m = (e as CustomEvent).detail as string;
+      if (m === "design" || m === "scrape") setMode(m as "scrape" | "design");
+    };
+    window.addEventListener("pwa:mode" as never, h as EventListener);
+    return () => window.removeEventListener("pwa:mode" as never, h as EventListener);
+  }, []);
 
   // Auto-scroll terminal log.
   useEffect(() => {
@@ -330,6 +346,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-canvas text-bone-text">
+      <PwaEnhancer onIncomingUrl={handleIncomingUrl} />
       {/* ---------- NAV ---------- */}
       <header className="sticky top-0 z-10 border-b border-steel-border bg-slate-canvas/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
@@ -823,6 +840,10 @@ export default function Home() {
             </span>
           </div>
         </div>
+        {/* PWA badge */}
+        <p className="mx-auto mt-4 max-w-[1200px] px-4 text-center font-mono text-[11px] text-fog-text sm:px-6">
+          PWA — <span className="hl hl-ink text-[11px]">Install</span> di Android/iOS · Share link langsung kebuka di app · Offline shell
+        </p>
       </footer>
 
       {/* Toast — ganti alert */}
