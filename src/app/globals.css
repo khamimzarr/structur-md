@@ -89,3 +89,117 @@ body {
   overflow-x: auto;
   font-size: 13px;
 }
+
+/* ===================== Animations — structur-md ===================== */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slideBg {
+  from { transform: translateX(var(--slide-from, 0)); }
+  to { transform: translateX(var(--slide-to, 0)); }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-fadeIn {
+  animation: fadeIn 500ms ease-out both;
+}
+.animate-scaleIn {
+  animation: scaleIn 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-spin-slow {
+  animation: spin 700ms linear infinite;
+}
+
+/* Hero stagger */
+.hero-enter { opacity: 0; transform: translateY(8px); }
+.hero-enter.mounted {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 520ms cubic-bezier(0.16, 1, 0.3, 1), transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reveal on scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 560ms cubic-bezier(0.16, 1, 0.3, 1), transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Toggle pill sliding bg */
+.toggle-track { position: relative; }
+.toggle-pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(50% - 4px);
+  border-radius: 9999px;
+  background: #a8ff53;
+  transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+/* Log line entrance */
+.log-line {
+  animation: fadeInUp 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, #1c1e21 25%, #272a2e 37%, #1c1e21 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+/* Button shimmer when busy */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease infinite;
+  opacity: 0.9;
+}
+
+/* Card hover lift */
+.card-lift {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), border-color 220ms ease, box-shadow 220ms ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  border-color: #3b3e45;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

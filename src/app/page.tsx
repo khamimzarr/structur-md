@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable react-hooks/refs -- reveal uses callback refs intentionally */
 import { useState, useRef, useEffect, useCallback } from "react";
 
 // ---------- tipe respons dari /api/scrape ----------
@@ -34,7 +35,32 @@ type HistoryItem = {
   created_at: string;
 };
 
+function useReveal(enabled = true) {
+  const [inView, setInView] = useState(false);
+  const callbackRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!enabled || !node) return;
+      const io = new IntersectionObserver(
+        ([e]) => {
+          if (e.isIntersecting) {
+            setInView(true);
+            io.unobserve(node);
+          }
+        },
+        { threshold: 0.12 }
+      );
+      io.observe(node);
+    },
+    [enabled]
+  );
+  return { callbackRef, inView };
+}
+
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  // initial mount signal — triggers hero entrance transition
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMounted(true); }, []);
   const [url, setUrl] = useState("");
   const [mode, setMode] = useState<"markdown" | "design">("markdown");
   const [busy, setBusy] = useState(false);
@@ -42,7 +68,10 @@ export default function Home() {
   const [result, setResult] = useState<ScrapeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const logRef = useRef<HTMLDivElement>(null);
+  const howReveal = useReveal(true);
+  const histReveal = useReveal(true);
 
   // Auto-scroll terminal log.
   useEffect(() => {
@@ -51,12 +80,15 @@ export default function Home() {
 
   // Muat riwayat hasil (dari tabel scrapes).
   const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
     try {
       const res = await fetch("/api/history?limit=6");
       const data = (await res.json()) as { ok: boolean; items?: HistoryItem[] };
       if (data.ok && data.items) setHistory(data.items);
     } catch {
       // riwayat gagal dimuat — biarkan kosong
+    } finally {
+      setHistoryLoading(false);
     }
   }, []);
   useEffect(() => {
@@ -160,36 +192,54 @@ export default function Home() {
 
       {/* ---------- HERO ---------- */}
       <section className="mx-auto max-w-[1200px] px-6 pb-16 pt-20 text-center">
-        <p className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-steel-border px-3 py-1 text-sm text-bone-text">
+        <p
+          className={`hero-enter mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-steel-border px-3 py-1 text-sm text-bone-text ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "0ms" }}
+        >
           <span className="h-2 w-2 rounded-full bg-loop-green" />
           URL scraping → Markdown
         </p>
 
-        <h1 className="mx-auto max-w-4xl text-4xl font-medium leading-tight tracking-[0.02em] sm:text-5xl md:text-6xl">
+        <h1
+          className={`hero-enter mx-auto max-w-4xl text-4xl font-medium leading-tight tracking-[0.02em] sm:text-5xl md:text-6xl ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "80ms" }}
+        >
           Ubah halaman web apa&nbsp;pun menjadi{" "}
           <span className="text-event-violet">Markdown</span> atau{}
           <span className="text-event-violet">DESIGN.md</span> instan
         </h1>
 
-        <p className="mx-auto mt-6 max-w-[600px] text-lg leading-relaxed text-fog-text">
+        <p
+          className={`hero-enter mx-auto mt-6 max-w-[600px] text-lg leading-relaxed text-fog-text ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "160ms" }}
+        >
           Ketik atau tempel URL. Ambil <span className="text-loop-green">konten</span> jadi Markdown,
           atau ekstrak <span className="text-syntax-pink">desain</span> halaman (warna, font, radius, padding)
           jadi <span className="text-key-lime">DESIGN.md</span> siap tiru.
         </p>
 
         {/* ---------- MODE TOGGLE ---------- */}
-        <div className="mx-auto mt-6 flex w-fit items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1">
-          {(["markdown", "design"] as const).map((m) => (
+        <div
+          className={`hero-enter toggle-track relative mx-auto mt-6 flex w-fit items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1 ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "220ms" }}
+        >
+          <div
+            className="toggle-pill"
+            aria-hidden
+            style={{
+              transform:
+                mode === "markdown" ? "translateX(0)" : "translateX(calc(100% + 4px))",
+            }}
+          />
+          {( ["markdown", "design"] as const).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => setMode(m)}
               disabled={busy}
-              className={
-                mode === m
-                  ? "rounded-full bg-signal-lime px-4 py-1.5 text-sm font-medium text-ink-well transition-colors"
-                  : "rounded-full px-4 py-1.5 text-sm font-medium text-cloud-text transition-colors hover:text-bone-text"
-              }
+              className={`relative z-10 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                mode === m ? "text-ink-well" : "text-cloud-text hover:text-bone-text"
+              }`}
             >
               {m === "markdown" ? "Konten → .md" : "Desain → DESIGN.md"}
             </button>
@@ -199,7 +249,8 @@ export default function Home() {
         {/* ---------- FORM ---------- */}
         <form
           onSubmit={handleSubmit}
-          className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row"
+          className={`hero-enter mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "300ms" }}
         >
           <input
             type="url"
@@ -208,13 +259,20 @@ export default function Home() {
             placeholder={mode === "design" ? "https://contoh.com" : "https://contoh.com/artikel"}
             disabled={busy}
             required
-            className="h-12 flex-1 rounded-[4px] border border-steel-border bg-ink-well px-4 text-cloud-text placeholder:text-fog-text focus:border-graphite-hairline focus:outline-none"
+            className="h-12 flex-1 rounded-[4px] border border-steel-border bg-ink-well px-4 text-cloud-text placeholder:text-fog-text focus:border-graphite-hairline focus:outline-none disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={busy}
-            className="h-12 rounded-[4px] bg-signal-lime px-6 font-semibold text-ink-well transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`h-12 inline-flex items-center justify-center gap-2 rounded-[4px] px-6 font-semibold transition-all duration-200 active:scale-[0.98] ${
+              busy
+                ? "btn-shimmer bg-signal-lime text-ink-well opacity-90"
+                : "bg-signal-lime text-ink-well hover:opacity-90 hover:shadow-[0_0_20px_rgba(168,255,83,0.22)]"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
+            {busy && (
+              <span className="h-4 w-4 rounded-full border-2 border-ink-well/30 border-t-ink-well animate-spin-slow" />
+            )}
             {busy ? "Memproses..." : mode === "design" ? "Ekstrak Desain →" : "Convert →"}
           </button>
         </form>
@@ -224,7 +282,7 @@ export default function Home() {
       <section id="tool" className="mx-auto max-w-[1200px] px-6 pb-24">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Terminal log */}
-          <div className="overflow-hidden rounded-[4px] border border-steel-border bg-ink-well">
+          <div className="card-lift overflow-hidden rounded-[4px] border border-steel-border bg-ink-well animate-fadeInUp" style={{ animationDelay: "80ms" }}>
             <div className="flex items-center gap-2 border-b border-steel-border px-4 py-2.5">
               <span className="h-2 w-2 rounded-full bg-mute-red/70" />
               <span className="h-2 w-2 rounded-full bg-key-lime/70" />
@@ -241,10 +299,10 @@ export default function Home() {
                   <span className="cursor-blink" />
                 </span>
               ) : (
-                log.map((l) => (
+                log.map((l, idx) => (
                   <div
                     key={l.id}
-                    className={
+                    className={`log-line ${
                       l.tone === "err"
                         ? "code-str"
                         : l.tone === "ok"
@@ -252,7 +310,8 @@ export default function Home() {
                         : l.tone === "muted"
                         ? "code-muted"
                         : ""
-                    }
+                    }`}
+                    style={{ animationDelay: `${Math.min(idx * 45, 240)}ms` }}
                   >
                     {l.text}
                   </div>
@@ -263,15 +322,15 @@ export default function Home() {
           </div>
 
           {/* Preview + actions */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" style={{ animationDelay: "140ms" } as React.CSSProperties}>
             {error && (
-              <div className="rounded-[4px] border border-mute-red/40 bg-ink-well p-4">
+              <div className="animate-scaleIn rounded-[4px] border border-mute-red/40 bg-ink-well p-4">
                 <p className="text-sm font-medium text-mute-red">✕ {error}</p>
               </div>
             )}
 
             {result?.ok ? (
-              <div className="flex-1 overflow-hidden rounded-[4px] border border-steel-border bg-ink-well">
+              <div className="animate-scaleIn flex-1 overflow-hidden rounded-[4px] border border-steel-border bg-ink-well">
                 <div className="flex items-center justify-between gap-2 border-b border-steel-border px-4 py-2.5">
                   <span className="truncate font-mono text-xs text-fog-text">
                     {result.title}
@@ -294,7 +353,7 @@ export default function Home() {
             )}
 
             {result?.ok && (
-              <div className="flex gap-3">
+              <div className="animate-fadeIn flex gap-3">
                 <button
                   onClick={download}
                   className="flex-1 rounded-[4px] bg-signal-lime px-4 py-2.5 font-semibold text-ink-well transition-opacity hover:opacity-90"
@@ -322,7 +381,10 @@ export default function Home() {
       </section>
 
       {/* ---------- HOW IT WORKS ---------- */}
-      <section id="how" className="border-t border-steel-border py-20">
+      <section
+        ref={howReveal.callbackRef}
+        className={`border-t border-steel-border py-20 reveal ${howReveal.inView ? "in" : ""}`}
+      >
         <div className="mx-auto max-w-[1200px] px-6">
           <h2 className="text-center text-3xl font-medium tracking-wide">
             Bagaimana <span className="text-event-violet">caranya</span>?
@@ -363,10 +425,11 @@ export default function Home() {
                   </>
                 ),
               },
-            ].map((s) => (
+            ].map((s, idx) => (
               <div
                 key={s.title}
-                className="rounded-[4px] border border-steel-border p-6 transition-colors hover:border-graphite-hairline"
+                className="card-lift rounded-[4px] border border-steel-border p-6"
+                style={{ transitionDelay: `${idx * 90}ms` } as React.CSSProperties}
               >
                 <div className="mb-4 text-2xl text-signal-lime">{s.icon}</div>
                 <h3 className="mb-2 text-xl font-medium">{s.title}</h3>
@@ -378,7 +441,10 @@ export default function Home() {
       </section>
 
       {/* ---------- RIWAYAT ---------- */}
-      <section className="border-t border-steel-border py-16">
+      <section
+        ref={histReveal.callbackRef}
+        className={`border-t border-steel-border py-16 reveal ${histReveal.inView ? "in" : ""}`}
+      >
         <div className="mx-auto max-w-[1200px] px-6">
           <div className="mb-8 flex items-center justify-between">
             <h2 className="text-2xl font-medium tracking-wide">
@@ -386,22 +452,33 @@ export default function Home() {
             </h2>
             <button
               onClick={() => void loadHistory()}
-              className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text hover:text-bone-text"
+              className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text transition hover:text-bone-text active:scale-[0.98]"
             >
               ↻ Muat ulang
             </button>
           </div>
 
-          {history.length === 0 ? (
+          {historyLoading ? (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <li key={i} className="rounded-[4px] border border-steel-border p-4">
+                  <div className="skeleton mb-2 h-4 w-3/4 rounded" />
+                  <div className="skeleton mb-4 h-3 w-full rounded" />
+                  <div className="skeleton h-7 w-20 rounded" />
+                </li>
+              ))}
+            </ul>
+          ) : history.length === 0 ? (
             <p className="text-sm text-fog-text">
               Belum ada hasil. Konversikan URL pertama kamu di atas.
             </p>
           ) : (
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {history.map((h) => (
+              {history.map((h, idx) => (
                 <li
                   key={h.slug}
-                  className="rounded-[4px] border border-steel-border p-4 transition-colors hover:border-graphite-hairline"
+                  className="card-lift animate-fadeInUp rounded-[4px] border border-steel-border p-4"
+                  style={{ animationDelay: `${idx * 70}ms` } as React.CSSProperties}
                 >
                   <p className="mb-1 truncate font-mono text-sm text-bone-text">{h.title}</p>
                   <p className="mb-3 truncate text-xs text-fog-text">{h.url}</p>
