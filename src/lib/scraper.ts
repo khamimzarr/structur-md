@@ -64,9 +64,13 @@ async function hostIsPrivate(hostname: string): Promise<boolean> {
 
 // Validasi & normalisasi URL.
 export function validateUrl(raw: string): URL {
+  if (raw.trim().length > 2048) {
+    throw new ApiError(400, "URL terlalu panjang (maks 2048 karakter).", "URL_TOO_LONG");
+  }
+
   let parsed: URL;
   try {
-    parsed = new URL(raw);
+    parsed = new URL(raw.trim());
   } catch {
     throw new ApiError(400, "URL tidak valid.");
   }
@@ -75,11 +79,20 @@ export function validateUrl(raw: string): URL {
     throw new ApiError(400, "Hanya mendukung protokol http/https.");
   }
 
+  // Tolak URL berisi kredensial (user:pass@host) — aman.
+  if (parsed.username || parsed.password) {
+    throw new ApiError(400, "URL tidak boleh mengandung kredensial (user:pass@).", "URL_CREDENTIALS");
+  }
+  parsed.hash = ""; // buang fragment
+  if (!parsed.hostname) {
+    throw new ApiError(400, "URL harus memiliki hostname valid.");
+  }
+
   const host = parsed.hostname.toLowerCase();
   if (BLOCKED_HOSTNAMES.has(host)) {
     throw new ApiError(400, `Hostname ${host} diblokir.`);
   }
-  if (host === "localhost" || host.endsWith(".local")) {
+  if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) {
     throw new ApiError(400, "Alamat lokal tidak diizinkan.");
   }
   return parsed;
@@ -147,6 +160,12 @@ export async function scrapeUrl(
         `Halaman mengembalikan HTTP ${res.status}.`,
         "HTTP_ERROR"
       );
+    }
+
+    // Pastikan benar-benar HTML (tolak file biner).
+    const ctype = res.headers.get("content-type") || "";
+    if (ctype && !/html|xml|text\/|application\/(xhtml|xml)/i.test(ctype)) {
+      throw new ApiError(400, "URL tidak mengembalikan dokumen HTML.", "NOT_HTML");
     }
 
     const length = Number(res.headers.get("content-length") || 0);

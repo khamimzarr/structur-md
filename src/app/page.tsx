@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 // ---------- tipe respons dari /api/scrape ----------
 interface ScrapeResponse {
@@ -25,6 +25,15 @@ function pushLine(
   setLog((prev) => [...prev, { id: ++seq, text, tone }]);
 }
 
+type HistoryItem = {
+  slug: string;
+  title: string;
+  url: string;
+  downloadUrl: string | null;
+  bytes: number;
+  created_at: string;
+};
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [mode, setMode] = useState<"markdown" | "design">("markdown");
@@ -32,12 +41,29 @@ export default function Home() {
   const [log, setLog] = useState<LogLine[]>([]);
   const [result, setResult] = useState<ScrapeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll terminal log.
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
   }, [log]);
+
+  // Muat riwayat hasil (dari tabel scrapes).
+  const loadHistory = useCallback(async () => {
+    try {
+      const res = await fetch("/api/history?limit=6");
+      const data = (await res.json()) as { ok: boolean; items?: HistoryItem[] };
+      if (data.ok && data.items) setHistory(data.items);
+    } catch {
+      // riwayat gagal dimuat — biarkan kosong
+    }
+  }, []);
+  useEffect(() => {
+    // Fetch data one-time saat mount (setState setelah await fetch).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadHistory();
+  }, [loadHistory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +103,7 @@ export default function Home() {
       pushLine(setLog, "exited(0)", "ok");
 
       setResult(data);
+      void loadHistory();
     } catch {
       pushLine(setLog, "! Gagal menghubungi server.", "err");
       setError("Gagal menghubungi server. Coba lagi.");
@@ -304,12 +331,14 @@ export default function Home() {
             {[
               {
                 icon: "→",
-                title: "Scrape",
+                title: "Ambil",
                 body: (
                   <>
-                    Headless Chromium merender halaman —{" "}
-                    <span className="text-syntax-violet">statis</span> maupun{" "}
-                    <span className="text-syntax-pink">dinamis</span> (SPA).
+                    Fetch + Cheerio mengolah halaman{" "}
+                    <span className="text-syntax-violet">statis</span> — ringan
+                    &amp; cepat tanpa headless browser.{" "}
+                    <span className="text-syntax-pink">Dinamis/SPA</span> butuh
+                    Chromium (opsi upgrade).
                   </>
                 ),
               },
@@ -348,12 +377,64 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- RIWAYAT ---------- */}
+      <section className="border-t border-steel-border py-16">
+        <div className="mx-auto max-w-[1200px] px-6">
+          <div className="mb-8 flex items-center justify-between">
+            <h2 className="text-2xl font-medium tracking-wide">
+              Riwayat <span className="text-event-violet">hasil</span>
+            </h2>
+            <button
+              onClick={() => void loadHistory()}
+              className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text hover:text-bone-text"
+            >
+              ↻ Muat ulang
+            </button>
+          </div>
+
+          {history.length === 0 ? (
+            <p className="text-sm text-fog-text">
+              Belum ada hasil. Konversikan URL pertama kamu di atas.
+            </p>
+          ) : (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {history.map((h) => (
+                <li
+                  key={h.slug}
+                  className="rounded-[4px] border border-steel-border p-4 transition-colors hover:border-graphite-hairline"
+                >
+                  <p className="mb-1 truncate font-mono text-sm text-bone-text">{h.title}</p>
+                  <p className="mb-3 truncate text-xs text-fog-text">{h.url}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[11px] text-fog-text">
+                      {(h.bytes / 1024).toFixed(1)} KB
+                    </span>
+                    {h.downloadUrl ? (
+                      <a
+                        href={h.downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-[4px] bg-signal-lime px-3 py-1 text-xs font-semibold text-ink-well hover:opacity-90"
+                      >
+                        Buka .md
+                      </a>
+                    ) : (
+                      <span className="text-xs text-fog-text">—</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
       {/* ---------- FOOTER ---------- */}
       <footer className="border-t border-steel-border py-10">
         <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-4 px-6 sm:flex-row">
           <p className="text-sm text-fog-text">
             structur<span className="text-cloud-text">_md</span> — Next.js ·
-            Puppeteer · Supabase Storage
+            Supabase Storage · Vercel
           </p>
           <div className="flex gap-3">
             <span className="rounded-full border border-steel-border px-3 py-1 text-xs text-bone-text">

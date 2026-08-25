@@ -11,15 +11,14 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
     "cheerio": "^1.0.0",
-    "css": "^3.0.0",
     "next": "16.3.2",
+    "postcss": "^8.5.26",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "turndown": "^7.2.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/css": "^0.0.38",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

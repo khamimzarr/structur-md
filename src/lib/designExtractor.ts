@@ -36,6 +36,7 @@ export interface ComponentSpec {
 export interface DesignResult {
   url: string;
   title: string;
+  library?: string; // deteksi framework styling (tailwind/emotion/styled-components/css-modules)
   tokens: DesignTokens;
   components: ComponentSpec[];
 }
@@ -262,6 +263,25 @@ function extractComponent(
   return { name: def.name, selector: selUsed, sample: sampleHtml, styles: decls };
 }
 
+// Deteksi framework/approach styling dari penanda HTML + pola class.
+function detectLibrary(html: string, $: cheerio.CheerioAPI): string | undefined {
+  const h = html.toLowerCase();
+  const classStr = Array.from($("[class]"))
+    .slice(0, 200)
+    .map((el) => $(el).attr("class") || "")
+    .join(" ");
+
+  // Tailwind: pertaruhkan pola utility (px-/py-/p--/bg-/text-/m-/gap-/flex...) bukan kata bebas.
+  if (/@tailwind|tailwindcss|(?:class|className)=\"[^\"]*\\b(?:px|py|p)-\\d/.test(h) && !/data-emotion/.test(h)) {
+    return "Tailwind CSS (utility classes)";
+  }
+  if (/data-emotion|@emotion|emotion\.core/i.test(h)) return "Emotion (CSS-in-JS)";
+  if (/data-styled|styled-components/i.test(h)) return "Styled-Components (CSS-in-JS)";
+  if (classStr.split(/\s+/).some((c) => /^(css|sc)-[\w-]+$/i.test(c))) return "CSS-in-JS (hashed class)";
+  if (/__[\w]+__[\w]+/i.test(classStr)) return "CSS Modules";
+  return undefined;
+}
+
 export async function extractDesign(rawUrl: string): Promise<DesignResult> {
   const scraped = await scrapeUrl(rawUrl, { timeoutMs: 15000 });
   const $ = cheerio.load(scraped.mainHtml);
@@ -276,5 +296,11 @@ export async function extractDesign(rawUrl: string): Promise<DesignResult> {
     if (spec) components.push(spec);
   }
 
-  return { url: scraped.url, title: scraped.title, tokens, components };
+  return {
+    url: scraped.url,
+    title: scraped.title,
+    library: detectLibrary(scraped.html, $),
+    tokens,
+    components,
+  };
 }

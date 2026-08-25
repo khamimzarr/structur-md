@@ -17,6 +17,7 @@ export function renderDesignMd(d: DesignResult): string {
   L.push("");
   L.push(`> Ekstrak otomatis dari ${d.url}`);
   L.push("> Nilai CSS di bawah diambil dari source stylesheet & inline style halaman.");
+  if (d.library) L.push(`> Styling: **${d.library}**`);
   L.push("");
   L.push("---");
   L.push("");

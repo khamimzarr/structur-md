@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { extractDesign } from "@/lib/designExtractor";
 import { renderDesignMd } from "@/lib/renderDesignMd";
 import { getServiceClient, getBucket } from "@/lib/supabase";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,14 @@ interface DesignRequest {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const rl = checkRateLimit(req);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "Terlalu banyak permintaan. Coba lagi sebentar lagi.", code: "RATE_LIMITED" },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec ?? 30) } }
+    );
+  }
+
   let body: DesignRequest;
   try {
     body = (await req.json()) as DesignRequest;
