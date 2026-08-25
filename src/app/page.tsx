@@ -27,6 +27,7 @@ function pushLine(
 
 export default function Home() {
   const [url, setUrl] = useState("");
+  const [mode, setMode] = useState<"markdown" | "design">("markdown");
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<LogLine[]>([]);
   const [result, setResult] = useState<ScrapeResponse | null>(null);
@@ -47,11 +48,12 @@ export default function Home() {
     setResult(null);
     setError(null);
     setLog([]);
+    const cmd = mode === "design" ? "extract-design" : "scrape";
     pushLine(setLog, `> structur-md v1.0`, "muted");
-    pushLine(setLog, `$ scrape "${target}"`, "ok");
+    pushLine(setLog, `$ ${cmd} "${target}"`, "ok");
 
     try {
-      const res = await fetch("/api/scrape", {
+      const res = await fetch(mode === "design" ? "/api/design" : "/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: target }),
@@ -66,7 +68,11 @@ export default function Home() {
         return;
       }
 
-      pushLine(setLog, `✓ markdown siap — ${(data.preview?.length ?? 0)}+ karakter`);
+      if (mode === "design") {
+        pushLine(setLog, `✓ DESIGN.md siap — ${(data.preview?.length ?? 0)}+ karakter`);
+      } else {
+        pushLine(setLog, `✓ markdown siap — ${(data.preview?.length ?? 0)}+ karakter`);
+      }
       pushLine(setLog, `✓ upload sukses → ${data.downloadUrl}`);
       pushLine(setLog, "exited(0)", "ok");
 
@@ -83,7 +89,7 @@ export default function Home() {
     if (!result?.downloadUrl) return;
     const a = document.createElement("a");
     a.href = result.downloadUrl;
-    a.download = `${result.slug ?? "markdown"}.md`;
+    a.download = `${result.slug ?? "output"}.md`;
     a.target = "_blank";
     a.rel = "noopener";
     a.click();
@@ -134,25 +140,45 @@ export default function Home() {
 
         <h1 className="mx-auto max-w-4xl text-4xl font-medium leading-tight tracking-[0.02em] sm:text-5xl md:text-6xl">
           Ubah halaman web apa&nbsp;pun menjadi{" "}
-          <span className="text-event-violet">Markdown</span> instan
+          <span className="text-event-violet">Markdown</span> atau{}
+          <span className="text-event-violet">DESIGN.md</span> instan
         </h1>
 
         <p className="mx-auto mt-6 max-w-[600px] text-lg leading-relaxed text-fog-text">
-          Ketik atau tempel URL. Mesin headless kami merender halaman statis
-          maupun dinamis, mengekstrak struktur konten, dan mengembalikannya
-          sebagai file <span className="text-loop-green">.md</span> siap pakai.
+          Ketik atau tempel URL. Ambil <span className="text-loop-green">konten</span> jadi Markdown,
+          atau ekstrak <span className="text-syntax-pink">desain</span> halaman (warna, font, radius, padding)
+          jadi <span className="text-key-lime">DESIGN.md</span> siap tiru.
         </p>
+
+        {/* ---------- MODE TOGGLE ---------- */}
+        <div className="mx-auto mt-6 flex w-fit items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1">
+          {(["markdown", "design"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              disabled={busy}
+              className={
+                mode === m
+                  ? "rounded-full bg-signal-lime px-4 py-1.5 text-sm font-medium text-ink-well transition-colors"
+                  : "rounded-full px-4 py-1.5 text-sm font-medium text-cloud-text transition-colors hover:text-bone-text"
+              }
+            >
+              {m === "markdown" ? "Konten → .md" : "Desain → DESIGN.md"}
+            </button>
+          ))}
+        </div>
 
         {/* ---------- FORM ---------- */}
         <form
           onSubmit={handleSubmit}
-          className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 sm:flex-row"
+          className="mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row"
         >
           <input
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://contoh.com/artikel"
+            placeholder={mode === "design" ? "https://contoh.com" : "https://contoh.com/artikel"}
             disabled={busy}
             required
             className="h-12 flex-1 rounded-[4px] border border-steel-border bg-ink-well px-4 text-cloud-text placeholder:text-fog-text focus:border-graphite-hairline focus:outline-none"
@@ -162,7 +188,7 @@ export default function Home() {
             disabled={busy}
             className="h-12 rounded-[4px] bg-signal-lime px-6 font-semibold text-ink-well transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {busy ? "Memproses…" : "Convert →"}
+            {busy ? "Memproses..." : mode === "design" ? "Ekstrak Desain →" : "Convert →"}
           </button>
         </form>
       </section>
@@ -224,7 +250,7 @@ export default function Home() {
                     {result.title}
                   </span>
                   <span className="shrink-0 rounded-full border border-steel-border px-2 py-0.5 text-xs text-loop-green">
-                    .md
+                    {mode === "design" ? "DESIGN.md" : ".md"}
                   </span>
                 </div>
                 <pre className="md-preview h-[340px] overflow-auto p-4 text-cloud-text">
@@ -234,8 +260,8 @@ export default function Home() {
             ) : (
               <div className="flex flex-1 items-center justify-center rounded-[4px] border border-dashed border-steel-border bg-ink-well p-8 text-center text-fog-text">
                 <p className="max-w-sm text-sm leading-relaxed">
-                  Hasil render Markdown akan tampil di sini setelah kamu
-                  mengonversi satu URL.
+                  Hasil {mode === "design" ? "DESIGN.md" : "Markdown"} akan tampil di sini
+                  setelah kamu mengonversi satu URL.
                 </p>
               </div>
             )}

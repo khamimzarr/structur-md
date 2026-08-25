@@ -105,6 +105,7 @@ export interface ScrapeResult {
   url: string;
   title: string;
   mainHtml: string;
+  html: string; // dokumen HTML penuh (untuk ekstraksi desain: <style>/<link> di <head>)
 }
 
 // Jalaan utama: fetch + parse.
@@ -193,5 +194,5 @@ export async function scrapeUrl(
     throw new ApiError(502, "Halaman tidak mengandung konten yang bisa di-scrape.", "EMPTY_CONTENT");
   }
 
-  return { url: url.toString(), title, mainHtml };
+  return { url: url.toString(), title, mainHtml, html };
 }
