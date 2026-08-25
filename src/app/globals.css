@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   structur-md — Design tokens (referensi DESING.md — tema Trigger.dev)
+   Terminal gelap: slate canvas, ink well, syntax palette, aksen signal lime.
+   ============================================================================ */
+
+@theme {
+  /* --- Warna --- */
+  --color-slate-canvas: #1c1e21;
+  --color-ink-well: #121317;
+  --color-graphite-hairline: #3b3e45;
+  --color-steel-border: #272a2e;
+  --color-ash-text: #b5b8c0;
+  --color-fog-text: #878c99;
+  --color-cloud-text: #d7d9dd;
+  --color-bone-text: #e5e7eb;
+  --color-signal-lime: #a8ff53;
+  --color-syntax-violet: #9c9af2;
+  --color-syntax-pink: #fa3abf;
+  --color-event-violet: #7655fd;
+  --color-loop-green: #afec73;
+  --color-key-lime: #d9f07c;
+  --color-tag-magenta: #e888f8;
+  --color-mute-red: #f43f5e;
+
+  /* --- Tipografi --- */
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* --- Radius --- */
+  --radius-card: 4px;
+}
+
+html {
+  background: #1c1e21;
+  color-scheme: dark;
+}
+
+body {
+  background: #1c1e21;
+  color: #e5e7eb;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar tipis ala terminal */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3b3e45 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3b3e45;
+  border-radius: 4px;
+}
+
+/* Sintaks highlight inline di log terminal */
+.code-kw { color: #9c9af2; }
+.code-str { color: #fa3abf; }
+.code-type { color: #afec73; }
+.code-var { color: #d9f07c; }
+.code-prop { color: #e888f8; }
+.code-muted { color: #878c99; }
+
+/* Blink kursor di terminal log */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.cursor-blink {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: #a8ff53;
+  animation: blink 1s steps(1) infinite;
+  vertical-align: text-bottom;
+}
+
+/* Kode preview markdown: latar ink well */
+.md-preview pre {
+  background: #121317;
+  border: 1px solid #272a2e;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 13px;
+}

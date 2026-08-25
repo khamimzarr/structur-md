@@ -1,0 +1,23 @@
+# ---- build output ----
+.next
+node_modules
+
+# ---- env / secrets ----
+.env
+.env.local
+.env*.local
+!.env.example
+
+# ---- editor / os ----
+.DS_Store
+*.bak
+.vscode
+.idea
+
+# ---- vercel ----
+.vercel
+
+# ---- misc ----
+package-lock.json
+npm-debug.log*
+yarn-error.log*
