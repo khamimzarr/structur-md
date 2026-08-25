@@ -128,7 +128,7 @@ export default function Home() {
     window.history.replaceState(null, "", `#${id}`);
   }, []);
   const [url, setUrl] = useState("");
-  const [mode, setMode] = useState<"markdown" | "design">("markdown");
+  const [mode, setMode] = useState<"scrape" | "design">("scrape");
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<LogLine[]>([]);
   const [result, setResult] = useState<ScrapeResponse | null>(null);
@@ -384,27 +384,27 @@ export default function Home() {
             <span className="hl hl-lime">Jadi file siap pakai</span>.
           </p>
 
-          {/* mode — minimal */}
+          {/* mode — Scrape.md / DESIGN.md — anti ketimpa */}
           <div
-            className={`hero-enter toggle-track relative mx-auto mt-5 flex w-fit items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1 ${mounted ? "mounted" : ""}`}
+            className={`hero-enter toggle-track mx-auto mt-5 w-full max-w-[320px] rounded-full border border-steel-border bg-ink-well p-1 sm:w-fit sm:max-w-none ${mounted ? "mounted" : ""}`}
             style={{ transitionDelay: "200ms" }}
           >
             <div
               className="toggle-pill"
               aria-hidden
               style={{
-                transform: mode === "markdown" ? "translateX(0)" : "translateX(calc(100% + 4px))",
+                transform: mode === "scrape" ? "translateX(0)" : "translateX(calc(100% + 4px))",
               }}
             />
-            {(["markdown", "design"] as const).map((m) => (
+            {(["scrape", "design"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
                 disabled={busy}
-                className={`relative z-10 rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${mode === m ? "text-ink-well" : "text-cloud-text hover:text-bone-text"}`}
+                className={`toggle-btn ${mode === m ? "text-ink-well" : "text-cloud-text hover:text-bone-text"}`}
               >
-                {m === "markdown" ? ".md" : "DESIGN.md"}
+                {m === "scrape" ? "Scrape.md" : "DESIGN.md"}
               </button>
             ))}
           </div>
@@ -570,7 +570,7 @@ export default function Home() {
                     </div>
                     <span className="font-mono text-[11px] text-fog-text">
                       {(result.preview?.length ?? 0).toLocaleString("id-ID")} chr · {wordCount.toLocaleString("id-ID")} words ·{" "}
-                      <span className="hl hl-ink text-[11px]">{mode === "design" ? "DESIGN.md" : ".md"}</span>
+                      <span className="hl hl-ink text-[11px]">{mode === "design" ? "DESIGN.md" : "Scrape.md"}</span>
                     </span>
                   </div>
                 </div>
@@ -589,7 +589,7 @@ export default function Home() {
             ) : (
               <div className="flex flex-1 items-center justify-center rounded-[4px] border border-dashed border-steel-border bg-ink-well p-8 text-center text-fog-text">
                 <p className="max-w-sm font-mono text-sm">
-                  Hasil <span className="hl hl-ink">{mode === "design" ? "DESIGN.md" : ".md"}</span> muncul di sini.
+                  Hasil <span className="hl hl-ink">{mode === "design" ? "DESIGN.md" : "Scrape.md"}</span> muncul di sini.
                 </p>
               </div>
             )}

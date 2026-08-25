@@ -146,18 +146,35 @@ body {
   transform: translateY(0);
 }
 
-/* Toggle pill sliding bg */
-.toggle-track { position: relative; }
+/* Toggle pill sliding bg — biar gak ketimpa */
+.toggle-track { position: relative; display: inline-flex; gap: 4px; }
 .toggle-pill {
   position: absolute;
   top: 4px;
   bottom: 4px;
-  width: calc(50% - 4px);
+  width: calc(50% - 6px);
   border-radius: 9999px;
   background: #a8ff53;
   transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
+  pointer-events: none;
 }
+.toggle-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 108px;
+  border-radius: 9999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 160ms;
+}
+@media (min-width: 640px) { .toggle-btn { min-width: 122px; font-size: 13px; padding: 7px 18px; } }
 
 /* Log line entrance */
 .log-line {
