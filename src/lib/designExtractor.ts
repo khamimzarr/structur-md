@@ -131,6 +131,76 @@ function parseRules(combined: string): { selectors: string[]; decls: Record<stri
   return out;
 }
 
+// ============ Utilitas resolusi warna (CSS -> hex) ============
+function toHex(n: number): string {
+  return Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+}
+
+// Resolve rantai var(--x) memakai peta cssVars.
+function resolveVar(v: string, vars: Record<string, string>): string {
+  let out = v;
+  let guard = 0;
+  while (guard++ < 10) {
+    const next = out.replace(/var\((--[\w-]+)(?:\s*,\s*([^)]*))?\)/g, (_m, name: string, fb?: string) => {
+      const val = vars[name];
+      return val !== undefined ? val : (fb ?? "");
+    });
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+}
+
+// Warna CSS -> hex (#rrggbb / #rrggbbaa) bila memungkinkan; selain itu kembalikan nilai ternormalisasi.
+function resolveColor(raw: string, vars: Record<string, string>): string {
+  const v = resolveVar(raw, vars).trim().toLowerCase();
+  if (!v) return raw;
+
+  if (/^#[0-9a-f]{3,8}$/.test(v)) return v;
+
+  // rgb(r g b) / rgb(r g b / a) / rgba(); ruang atau koma bisa.
+  const rgbm = v.match(/^rgba?\(\s*([\d.]+)\s*[,\s]+([\d.]+)\s*[,\s]+([\d.]+)\s*(?:\s*[\/,]\s*([\d.]+%?))?\s*\)$/);
+  if (rgbm) {
+    const r = toHex(Number(rgbm[1]));
+    const g = toHex(Number(rgbm[2]));
+    const b = toHex(Number(rgbm[3]));
+    const a = rgbm[4];
+    if (a === undefined) return `#${r}${g}${b}`;
+    const pct = a.endsWith("%") ? parseFloat(a) / 100 : parseFloat(a);
+    return `#${r}${g}${b}${toHex(pct * 255)}`;
+  }
+
+  // hsl / hsla
+  const hslm = v.match(/^hsla?\(\s*([\d.]+)(?:deg)?\s*[,\s]+([\d.]+)%\s*[,\s]+([\d.]+)%\s*(?:[,\/]\s*([\d.]+%?))?\s*\)$/);
+  if (hslm) {
+    const H = ((Number(hslm[1]) % 360) + 360) % 360;
+    const S = Number(hslm[2]) / 100;
+    const L = Number(hslm[3]) / 100;
+    const a = hslm[4];
+    const C = (1 - Math.abs(2 * L - 1)) * S;
+    const X = C * (1 - Math.abs(((H / 60) % 2) - 1));
+    const mm = L - C / 2;
+    const hh = H / 60;
+    let r: number, g: number, b: number;
+    if (hh < 1) { r = C; g = X; b = 0; }
+    else if (hh < 2) { r = X; g = C; b = 0; }
+    else if (hh < 3) { r = 0; g = C; b = X; }
+    else if (hh < 4) { r = 0; g = X; b = C; }
+    else if (hh < 5) { r = X; g = 0; b = C; }
+    else { r = C; g = 0; b = X; }
+    const hex = `#${toHex((r + mm) * 255)}${toHex((g + mm) * 255)}${toHex((b + mm) * 255)}`;
+    if (a === undefined) return hex;
+    const pct = a.endsWith("%") ? parseFloat(a) / 100 : parseFloat(a);
+    return `${hex}${toHex(pct * 255)}`;
+  }
+
+  return v;
+}
+
+function isColorProp(k: string): boolean {
+  return k === "color" || k === "background" || k === "background-color" || k === "border-color" || k.endsWith("-color");
+}
+
 // Ekstrak tokens global.
 function extractTokens(rules: { selectors: string[]; decls: Record<string, string> }[], $: cheerio.CheerioAPI): DesignTokens {
   const cssVars: Record<string, string> = {};
@@ -149,9 +219,9 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
       }
     }
     for (const [k, v] of Object.entries(rule.decls)) {
-      // Warna: ambil literal (#/rgb/hsl/oklch) MAUPUN nilai var() yang merujuk ke hex.
-      if (/(^|[- ])color$/.test(k)) {
-        if (/\b(#|rgb|hsl|oklch|rgba|hsla)/i.test(v)) colors.add(v.toLowerCase());
+      if (isColorProp(k)) {
+        const c = resolveColor(v, cssVars);
+        if (c && c !== "transparent") colors.add(c);
         const m = v.match(/var\(--[\w-]+\)/);
         if (m) {
           const ref = cssVars[m[1]] || "";
@@ -172,18 +242,48 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
     if (m) m.forEach((c) => colors.add(c.toLowerCase()));
   });
 
-  const sortByFreq = (set: Set<string>) => Array.from(set).slice(0, 24);
+  // Resolve nilai cssVars (rantai var -> hex) supaya :root tampil #hex.
+  const resolvedVars: Record<string, string> = {};
+  for (const [k, v] of Object.entries(cssVars)) {
+    const r = resolveColor(v, cssVars);
+    resolvedVars[k] = /^#[0-9a-f]{3,8}$/.test(r) ? r : v;
+  }
+
+  // Bersihkan scale numerik.
+  const toPx = (val: string): number | null => {
+    const t = val.trim().toLowerCase();
+    if (t.endsWith("rem") || t.endsWith("em")) return 16 * parseFloat(t);
+    if (t.endsWith("px")) return parseFloat(t);
+    if (/^[\d.]+$/.test(t)) return parseFloat(t);
+    return null;
+  };
+  const cleanScale = (vals: Set<string>, drop: RegExp): string[] => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const raw of vals) {
+      for (const tok of raw.split(/\s+/).filter(Boolean)) {
+        if (drop.test(tok)) continue;
+        const px = toPx(tok);
+        const key = px !== null ? `${Math.round(px)}px` : tok;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(key);
+      }
+    }
+    return out
+      .map((s) => ({ s, n: parseFloat(s) || 0 }))
+      .sort((a, b) => a.n - b.n)
+      .map((o) => o.s)
+      .slice(0, 16);
+  };
 
   return {
-    colors: sortByFreq(colors),
-    cssVars,
-    fonts: Array.from(fonts).slice(0, 12),
-    radius: Array.from(radius).slice(0, 12),
-    fontSizes: Array.from(fontSizes).slice(0, 16).sort((a, b) => {
-      const na = parseFloat(a); const nb = parseFloat(b);
-      return na - nb;
-    }),
-    spacing: Array.from(spacing).slice(0, 16).sort((a, b) => parseFloat(a) - parseFloat(b)),
+    colors: Array.from(colors).filter((c) => /^#[0-9a-f]{3,8}$/.test(c)).slice(0, 24),
+    cssVars: resolvedVars,
+    fonts: Array.from(fonts).map((f) => f.trim()).filter((f) => f && f !== "inherit").slice(0, 12),
+    radius: cleanScale(radius, /^(inherit|auto|initial)$/i),
+    fontSizes: cleanScale(fontSizes, /^(inherit|auto|initial|100%|75%)$/i),
+    spacing: cleanScale(spacing, /^(auto|inherit)$/i),
   };
 }
 
@@ -210,7 +310,8 @@ function lookupDecls(
 function extractComponent(
   $: cheerio.CheerioAPI,
   rules: { selectors: string[]; decls: Record<string, string> }[],
-  def: ComponentDef
+  def: ComponentDef,
+  cssVars: Record<string, string>
 ): ComponentSpec | null {
   let selUsed = "";
   let sampleEl: ReturnType<typeof $> | null = null;
@@ -257,6 +358,10 @@ function extractComponent(
 
   // Gabungkan: inline > class utility > selektor komponen (spesifisitas kasar)
   const decls: Record<string, string> = { ...fromSelector, ...fromClasses, ...inline };
+  // Resolve warna (var(--x) + rgb() → #hex) bila ada.
+  for (const [k, v] of Object.entries(decls)) {
+    if (isColorProp(k)) decls[k] = resolveColor(v, cssVars);
+  }
 
   const sampleHtml = $.html(sampleEl).slice(0, 400).replace(/\s+/g, " ");
 
@@ -292,7 +397,7 @@ export async function extractDesign(rawUrl: string): Promise<DesignResult> {
 
   const components: ComponentSpec[] = [];
   for (const def of COMPONENTS) {
-    const spec = extractComponent($, rules, def);
+    const spec = extractComponent($, rules, def, tokens.cssVars);
     if (spec) components.push(spec);
   }
 
