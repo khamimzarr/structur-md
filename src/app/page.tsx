@@ -194,9 +194,9 @@ export default function Home() {
     if (!result?.preview) return;
     try {
       await navigator.clipboard.writeText(result.preview);
-      alert("Preview markdown disalin.");
+      alert("Disalin.");
     } catch {
-      alert("Gagal menyalin. Salin manual dari panel.");
+      alert("Gagal. Salin manual.");
     }
   };
 
@@ -214,10 +214,10 @@ export default function Home() {
           {/* Desktop nav */}
           <nav className="hidden gap-6 text-sm text-cloud-text sm:flex">
             <button type="button" onClick={() => scrollToId("how")} className="min-h-[44px] hover:text-bone-text">
-              Cara kerja
+              Proses
             </button>
             <button type="button" onClick={() => scrollToId("tool")} className="min-h-[44px] hover:text-bone-text">
-              Alat
+              Output
             </button>
           </nav>
           <div className="flex items-center gap-2">
@@ -271,14 +271,14 @@ export default function Home() {
               onClick={() => scrollToId("how")}
               className="py-3 text-left text-sm text-cloud-text hover:text-bone-text"
             >
-              Cara kerja
+              Proses
             </button>
             <button
               type="button"
               onClick={() => scrollToId("tool")}
               className="py-3 text-left text-sm text-cloud-text hover:text-bone-text"
             >
-              Alat
+              Output
             </button>
             <a
               href="https://github.com/khamimzarr/structur-md"
@@ -293,37 +293,33 @@ export default function Home() {
       </header>
 
       {/* ---------- HERO ---------- */}
-      <section className="mx-auto max-w-[1200px] px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-20 text-center">
+      <section className="mx-auto max-w-[1200px] px-4 pb-10 pt-10 sm:px-6 sm:pb-14 sm:pt-16 text-center">
         <p
-          className={`hero-enter mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-steel-border px-3 py-1 text-sm text-bone-text ${mounted ? "mounted" : ""}`}
+          className={`hero-enter mx-auto mb-3 inline-flex items-center gap-2 rounded-full border border-steel-border px-3 py-1 text-xs sm:text-sm text-bone-text ${mounted ? "mounted" : ""}`}
           style={{ transitionDelay: "0ms" }}
         >
           <span className="h-2 w-2 rounded-full bg-loop-green" />
-          URL scraping → Markdown
+          URL → Markdown
         </p>
 
         <h1
-          className={`hero-enter mx-auto max-w-4xl text-[30px] font-medium leading-[1.05] tracking-[0.02em] sm:text-5xl md:text-6xl ${mounted ? "mounted" : ""}`}
+          className={`hero-enter mx-auto max-w-4xl text-[30px] font-medium leading-[1.05] tracking-[0.02em] sm:text-5xl md:text-[56px] ${mounted ? "mounted" : ""}`}
           style={{ transitionDelay: "80ms" }}
         >
-          Ubah halaman web apa&nbsp;pun menjadi{" "}
-          <span className="text-event-violet">Markdown</span> atau{}
-          <span className="text-event-violet">DESIGN.md</span> instan
+          URL apapun → <span className="text-event-violet">.md</span> instan
         </h1>
 
         <p
-          className={`hero-enter mx-auto mt-5 max-w-[600px] text-[15px] leading-relaxed text-fog-text sm:mt-6 sm:text-lg ${mounted ? "mounted" : ""}`}
-          style={{ transitionDelay: "160ms" }}
+          className={`hero-enter mx-auto mt-3 max-w-[520px] text-sm leading-relaxed text-fog-text sm:text-[15px] ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "140ms" }}
         >
-          Ketik atau tempel URL. Ambil <span className="text-loop-green">konten</span> jadi Markdown,
-          atau ekstrak <span className="text-syntax-pink">desain</span> halaman (warna, font, radius, padding)
-          jadi <span className="text-key-lime">DESIGN.md</span> siap tiru.
+          Tempel link. Pilih mode. Jadi file siap pakai.
         </p>
 
-        {/* ---------- MODE TOGGLE ---------- */}
+        {/* mode — minimal */}
         <div
-          className={`hero-enter toggle-track relative mx-auto mt-6 flex w-full max-w-[320px] items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1 sm:w-fit sm:max-w-none ${mounted ? "mounted" : ""}`}
-          style={{ transitionDelay: "220ms" }}
+          className={`hero-enter toggle-track relative mx-auto mt-5 flex w-fit items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1 ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "200ms" }}
         >
           <div
             className="toggle-pill"
@@ -339,45 +335,84 @@ export default function Home() {
               type="button"
               onClick={() => setMode(m)}
               disabled={busy}
-              className={`relative z-10 flex-1 rounded-full px-3 py-2 text-[13px] font-medium transition-colors sm:flex-none sm:px-4 sm:py-1.5 sm:text-sm ${
+              className={`relative z-10 rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
                 mode === m ? "text-ink-well" : "text-cloud-text hover:text-bone-text"
               }`}
             >
-              {m === "markdown" ? "Konten → .md" : "Desain → DESIGN.md"}
+              {m === "markdown" ? ".md" : "DESIGN.md"}
             </button>
           ))}
         </div>
 
-        {/* ---------- FORM ---------- */}
-        <form
-          onSubmit={handleSubmit}
-          className={`hero-enter mx-auto mt-6 flex w-full max-w-2xl flex-col gap-3 sm:flex-row ${mounted ? "mounted" : ""}`}
-          style={{ transitionDelay: "300ms" }}
+        {/* ---------- CLI FRAME — paste URL (desktop diperbesar) ---------- */}
+        <div
+          className={`hero-enter cli-shell mx-auto mt-6 w-full max-w-[880px] overflow-hidden rounded-[8px] border border-steel-border bg-ink-well text-left shadow-[0_10px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(168,255,83,0.06)] ${mounted ? "mounted" : ""}`}
+          style={{ transitionDelay: "260ms" }}
         >
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder={mode === "design" ? "https://contoh.com" : "https://contoh.com/artikel"}
-            disabled={busy}
-            required
-            className="h-[48px] w-full flex-1 rounded-[4px] border border-steel-border bg-ink-well px-4 text-[16px] text-cloud-text placeholder:text-fog-text focus:border-graphite-hairline focus:outline-none disabled:opacity-60 sm:h-12 sm:text-[15px]"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className={`h-[48px] w-full shrink-0 inline-flex items-center justify-center gap-2 rounded-[4px] px-6 text-[15px] font-semibold transition-all duration-200 active:scale-[0.98] sm:h-12 sm:w-auto ${
-              busy
-                ? "btn-shimmer bg-signal-lime text-ink-well opacity-90"
-                : "bg-signal-lime text-ink-well hover:opacity-90 hover:shadow-[0_0_20px_rgba(168,255,83,0.22)]"
-            } disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            {busy && (
-              <span className="h-4 w-4 rounded-full border-2 border-ink-well/30 border-t-ink-well animate-spin-slow" />
-            )}
-            {busy ? "Memproses..." : mode === "design" ? "Ekstrak Desain →" : "Convert →"}
-          </button>
-        </form>
+          {/* titlebar */}
+          <div className="flex items-center justify-between border-b border-steel-border bg-[#0e0f11] px-3 py-2.5 sm:px-4">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-mute-red/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-key-lime/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-loop-green/80" />
+              <span className="ml-2 hidden font-mono text-xs tracking-wide text-fog-text sm:inline">
+                structur-md — {mode === "design" ? "extract-design" : "scrape"}
+              </span>
+              <span className="ml-2 font-mono text-xs text-fog-text sm:hidden">structur-md</span>
+            </div>
+            <span className="font-mono text-[11px] text-fog-text">~/paste</span>
+          </div>
+
+          {/* command line hint */}
+          <div className="px-4 pt-3 font-mono text-xs text-fog-text sm:px-6 sm:pt-4">
+            <span className="text-signal-lime">$</span> structur-md {mode === "design" ? "extract-design" : "scrape"} <span className="text-cloud-text">--url</span> <span className="text-fog-text/70">[tempel di bawah]</span>
+          </div>
+
+          {/* form */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:p-4 sm:gap-3 lg:gap-4 sm:px-6 sm:pb-6">
+            <div className="flex flex-1 items-center gap-2 rounded-[6px] border border-steel-border bg-slate-canvas px-3 py-2 focus-within:border-graphite-hairline focus-within:ring-1 focus-within:ring-signal-lime/20 sm:px-4 sm:py-0 sm:h-[56px] lg:h-[64px]">
+              <span className="hidden shrink-0 font-mono text-sm text-signal-lime sm:inline">›</span>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://contoh.com/artikel"
+                disabled={busy}
+                required
+                autoFocus
+                className="h-11 w-full bg-transparent font-mono text-[15px] text-bone-text placeholder:text-fog-text/60 focus:outline-none sm:h-full sm:text-[15px] lg:text-[16px]"
+              />
+              {url && !busy && (
+                <button type="button" onClick={() => setUrl("")} className="shrink-0 rounded px-1.5 py-1 font-mono text-xs text-fog-text hover:text-bone-text" aria-label="hapus">
+                  ✕
+                </button>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={busy}
+              className={`inline-flex h-[48px] shrink-0 items-center justify-center gap-2 rounded-[6px] px-7 font-mono text-sm font-semibold transition-all active:scale-[0.98] sm:h-[56px] lg:h-[64px] sm:px-8 lg:px-10 ${
+                busy
+                  ? "btn-shimmer bg-signal-lime text-ink-well opacity-90"
+                  : "bg-signal-lime text-ink-well hover:opacity-90 hover:shadow-[0_0_22px_rgba(168,255,83,0.25)]"
+              } disabled:opacity-50`}
+            >
+              {busy ? (
+                <>
+                  <span className="h-4 w-4 rounded-full border-2 border-ink-well/30 border-t-ink-well animate-spin-slow" />
+                  ...
+                </>
+              ) : (
+                <>Convert →</>
+              )}
+            </button>
+          </form>
+          <div className="border-t border-steel-border/60 bg-[#0e0f11]/60 px-4 py-2 sm:px-6">
+            <p className="font-mono text-[11px] leading-none text-fog-text">
+              <span className="text-cloud-text">↵ Enter</span> untuk convert · <span className="hidden sm:inline">paste &amp; jalan — hasil muncul di bawah</span><span className="sm:hidden">hasil di bawah</span>
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* ---------- OUTPUT AREA ---------- */}
@@ -397,7 +432,7 @@ export default function Home() {
             >
               {log.length === 0 ? (
                 <span className="code-muted">
-                  # tempel URL di atas, lalu tekan Convert.{" "}
+                  # paste URL → Convert{" "}
                   <span className="cursor-blink" />
                 </span>
               ) : (
@@ -447,9 +482,8 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex flex-1 items-center justify-center rounded-[4px] border border-dashed border-steel-border bg-ink-well p-8 text-center text-fog-text">
-                <p className="max-w-sm text-sm leading-relaxed">
-                  Hasil {mode === "design" ? "DESIGN.md" : "Markdown"} akan tampil di sini
-                  setelah kamu mengonversi satu URL.
+                <p className="max-w-sm font-mono text-sm">
+                  Hasil {mode === "design" ? "DESIGN.md" : ".md"} muncul di sini.
                 </p>
               </div>
             )}
@@ -458,13 +492,13 @@ export default function Home() {
               <div className="animate-fadeIn flex gap-3">
                 <button
                   onClick={download}
-                  className="flex-1 rounded-[4px] bg-signal-lime px-4 py-2.5 font-semibold text-ink-well transition-opacity hover:opacity-90"
+                  className="flex-1 rounded-[4px] bg-signal-lime px-4 py-2.5 font-mono text-sm font-semibold text-ink-well transition-opacity hover:opacity-90"
                 >
-                  Download .md
+                  Download
                 </button>
                 <button
                   onClick={copyMarkdown}
-                  className="flex-1 rounded-[4px] border border-graphite-hairline px-4 py-2.5 text-cloud-text transition-colors hover:text-bone-text"
+                  className="flex-1 rounded-[4px] border border-graphite-hairline px-4 py-2.5 font-mono text-sm text-cloud-text transition-colors hover:text-bone-text"
                 >
                   Copy
                 </button>
@@ -472,9 +506,9 @@ export default function Home() {
                   href={result.downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 rounded-[4px] border border-graphite-hairline px-4 py-2.5 text-center text-cloud-text transition-colors hover:text-bone-text"
+                  className="flex-1 rounded-[4px] border border-graphite-hairline px-4 py-2.5 text-center font-mono text-sm text-cloud-text transition-colors hover:text-bone-text"
                 >
-                  Buka link
+                  Buka
                 </a>
               </div>
             )}
@@ -489,44 +523,25 @@ export default function Home() {
         className={`scroll-mt-20 border-t border-steel-border py-12 sm:py-20 reveal ${howReveal.inView ? "in" : ""}`}
       >
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
-          <h2 className="text-center text-3xl font-medium tracking-wide">
-            Bagaimana <span className="text-event-violet">caranya</span>?
+          <h2 className="text-center font-mono text-2xl font-medium tracking-wide">
+            3 <span className="text-event-violet">langkah</span>
           </h2>
-          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
             {[
               {
                 icon: "→",
                 title: "Ambil",
-                body: (
-                  <>
-                    Fetch + Cheerio mengolah halaman{" "}
-                    <span className="text-syntax-violet">statis</span> — ringan
-                    &amp; cepat tanpa headless browser.{" "}
-                    <span className="text-syntax-pink">Dinamis/SPA</span> butuh
-                    Chromium (opsi upgrade).
-                  </>
-                ),
+                body: <>Fetch statis — cepat & ringan.</>,
               },
               {
                 icon: "#",
-                title: "Konversi",
-                body: (
-                  <>
-                    Struktur DOM diekstrak dan diubah jadi{" "}
-                    <span className="text-loop-green">Markdown</span> bersih.
-                  </>
-                ),
+                title: "Ubah",
+                body: <>DOM → <span className="text-loop-green">.md</span> bersih.</>,
               },
               {
                 icon: "↓",
                 title: "Export",
-                body: (
-                  <>
-                    File <span className="text-tag-magenta">.md</span> di-upload ke
-                    Supabase Storage untuk{" "}
-                    <span className="text-key-lime">link publik</span>.
-                  </>
-                ),
+                body: <><span className="text-tag-magenta">.md</span> → link publik.</>,
               },
             ].map((s, idx) => (
               <div
@@ -550,14 +565,14 @@ export default function Home() {
       >
         <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
           <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-2xl font-medium tracking-wide">
-              Riwayat <span className="text-event-violet">hasil</span>
+            <h2 className="font-mono text-xl font-medium tracking-wide">
+              Riwayat
             </h2>
             <button
               onClick={clearHistory}
-              className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text transition hover:text-bone-text active:scale-[0.98]"
+              className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 font-mono text-xs text-cloud-text transition hover:text-bone-text active:scale-[0.98]"
             >
-              Hapus riwayat
+              Hapus
             </button>
           </div>
 
@@ -572,8 +587,8 @@ export default function Home() {
               ))}
             </ul>
           ) : history.length === 0 ? (
-            <p className="text-sm text-fog-text">
-              Belum ada hasil. Konversikan URL pertama kamu di atas.
+            <p className="font-mono text-sm text-fog-text">
+              Belum ada. Paste URL di atas → Convert.
             </p>
           ) : (
             <ul className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -613,8 +628,7 @@ export default function Home() {
       <footer className="border-t border-steel-border py-8 sm:py-10">
         <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:gap-4 sm:px-6">
           <p className="text-sm text-fog-text">
-            structur<span className="text-cloud-text">_md</span> — Next.js ·
-            Supabase Storage · Vercel
+            structur<span className="text-cloud-text">_md</span> — .md instan
           </p>
           <div className="flex gap-3">
             <span className="rounded-full border border-steel-border px-3 py-1 text-xs text-bone-text">
