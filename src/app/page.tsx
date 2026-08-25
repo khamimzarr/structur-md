@@ -35,6 +35,8 @@ type HistoryItem = {
   created_at: string;
 };
 
+const HISTORY_KEY = "structur-md:history";
+
 function useReveal(enabled = true) {
   const [inView, setInView] = useState(false);
   const callbackRef = useCallback(
@@ -89,23 +91,31 @@ export default function Home() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
   }, [log]);
 
-  // Muat riwayat hasil (dari tabel scrapes).
-  const loadHistory = useCallback(async () => {
+  // Riwayat per sesi — hanya di browser ini, hilang saat tab/browser ditutup.
+  const loadHistory = useCallback(() => {
     setHistoryLoading(true);
     try {
-      const res = await fetch("/api/history?limit=6");
-      const data = (await res.json()) as { ok: boolean; items?: HistoryItem[] };
-      if (data.ok && data.items) setHistory(data.items);
+      const raw = sessionStorage.getItem(HISTORY_KEY);
+      if (raw) {
+        const items = JSON.parse(raw) as HistoryItem[];
+        if (Array.isArray(items)) setHistory(items);
+      }
     } catch {
-      // riwayat gagal dimuat — biarkan kosong
+      // abaikan jika storage tidak tersedia / rusak
     } finally {
       setHistoryLoading(false);
     }
   }, []);
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    try {
+      sessionStorage.removeItem(HISTORY_KEY);
+    } catch {}
+  }, []);
   useEffect(() => {
-    // Fetch data one-time saat mount (setState setelah await fetch).
+    // Muat riwayat sesi saat mount; sessionStorage hilang saat tutup tab/browser.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadHistory();
+    loadHistory();
   }, [loadHistory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,7 +156,22 @@ export default function Home() {
       pushLine(setLog, "exited(0)", "ok");
 
       setResult(data);
-      void loadHistory();
+      // Simpan ke riwayat sesi (private, hilang saat tutup web).
+      const newItem: HistoryItem = {
+        slug: data.slug ?? `tmp-${Date.now()}`,
+        title: data.title ?? target,
+        url: data.url ?? target,
+        downloadUrl: data.downloadUrl ?? null,
+        bytes: data.preview?.length ?? 0,
+        created_at: new Date().toISOString(),
+      };
+      setHistory((prev) => {
+        const next = [newItem, ...prev].slice(0, 20);
+        try {
+          sessionStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
     } catch {
       pushLine(setLog, "! Gagal menghubungi server.", "err");
       setError("Gagal menghubungi server. Coba lagi.");
@@ -529,10 +554,10 @@ export default function Home() {
               Riwayat <span className="text-event-violet">hasil</span>
             </h2>
             <button
-              onClick={() => void loadHistory()}
+              onClick={clearHistory}
               className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text transition hover:text-bone-text active:scale-[0.98]"
             >
-              ↻ Muat ulang
+              Hapus riwayat
             </button>
           </div>
 
