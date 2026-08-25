@@ -450,7 +450,7 @@ export default function Home() {
 
           {/* ---------- CLI FRAME — paste URL ---------- */}
           <div
-            className={`hero-enter cli-shell mx-auto mt-6 w-full max-w-[880px] overflow-hidden rounded-[8px] border text-left shadow-[0_10px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(168,255,83,0.06)] ${mounted ? "mounted" : ""} ${isValidUrl && !busy ? "border-signal-lime/25" : "border-steel-border"} bg-ink-well`}
+            className={`hero-enter cli-shell cli-breathe mx-auto mt-6 w-full max-w-[880px] overflow-hidden rounded-[8px] border text-left ${mounted ? "mounted" : ""} ${isValidUrl && !busy ? "border-signal-lime/25" : "border-steel-border"} bg-ink-well`}
             style={{ transitionDelay: "260ms" }}
           >
             <div className="flex items-center justify-between border-b border-steel-border bg-[#0e0f11] px-3 py-2.5 sm:px-4">
@@ -521,19 +521,20 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Example chips */}
+          {/* Example chips — stagger 80ms */}
           <div
             className={`hero-enter mx-auto mt-4 flex flex-wrap items-center justify-center gap-2 ${mounted ? "mounted" : ""}`}
             style={{ transitionDelay: "320ms" }}
           >
             <span className="font-mono text-[11px] text-fog-text">Coba:</span>
-            {EXAMPLES.map((ex) => (
+            {EXAMPLES.map((ex, i) => (
               <button
                 key={ex.url}
                 type="button"
                 disabled={busy}
                 onClick={() => runScrape(ex.url)}
-                className="chip active:scale-[0.98] disabled:opacity-50"
+                className="chip chip-enter active:scale-[0.98] disabled:opacity-50"
+                style={{ animationDelay: `${400 + i * 80}ms` }}
                 title={ex.url}
               >
                 <span className="chip-dot" /> {ex.label}
@@ -607,7 +608,12 @@ export default function Home() {
                 <div className="flex flex-col gap-2 border-b border-steel-border px-3 py-2.5 sm:px-4">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate font-mono text-xs text-fog-text">{result.title}</span>
-                    <span className="hl hl-lime text-[11px]">Done ✓</span>
+                    <span className="hl hl-lime inline-flex items-center gap-1 text-[11px]">
+                      Done
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden className="shrink-0">
+                        <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="done-tick" pathLength={18} />
+                      </svg>
+                    </span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 rounded-full bg-slate-canvas p-1">

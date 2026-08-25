@@ -113,6 +113,18 @@ body {
   from { transform: translateX(var(--slide-from, 0)); }
   to { transform: translateX(var(--slide-to, 0)); }
 }
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 10px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(168,255,83,0.06); border-color: #272a2e; }
+  50% { box-shadow: 0 10px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(168,255,83,0.12), 0 0 18px rgba(168,255,83,0.08); border-color: rgba(168,255,83,0.16); }
+}
+@keyframes tickDraw {
+  from { stroke-dashoffset: 18; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes chipIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .animate-fadeInUp {
   animation: fadeInUp 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -307,6 +319,11 @@ body {
   transform: translateY(-2px);
   border-color: #3b3e45;
 }
+
+/* 3 micro polish */
+.cli-breathe { animation: breathe 3.2s ease-in-out infinite; }
+.done-tick { stroke-dasharray: 18; stroke-dashoffset: 18; animation: tickDraw 380ms cubic-bezier(0.16,1,0.3,1) forwards; }
+.chip-enter { opacity: 0; animation: chipIn 360ms cubic-bezier(0.16,1,0.3,1) both; }
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
