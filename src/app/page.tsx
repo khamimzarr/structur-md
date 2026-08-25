@@ -58,9 +58,20 @@ function useReveal(enabled = true) {
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   // initial mount signal — triggers hero entrance transition
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
+
+  const scrollToId = useCallback((id: string) => {
+    setMobileOpen(false);
+    const el = document.getElementById(id);
+    if (!el) return;
+    const headerOffset = 64;
+    const y = el.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({ top: y, behavior: "smooth" });
+    window.history.replaceState(null, "", `#${id}`);
+  }, []);
   const [url, setUrl] = useState("");
   const [mode, setMode] = useState<"markdown" | "design">("markdown");
   const [busy, setBusy] = useState(false);
@@ -168,30 +179,96 @@ export default function Home() {
     <div className="min-h-screen bg-slate-canvas text-bone-text">
       {/* ---------- NAV ---------- */}
       <header className="sticky top-0 z-10 border-b border-steel-border bg-slate-canvas/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 rounded-sm bg-signal-lime" />
-            <span className="font-semibold tracking-wide">
+            <span className="inline-block h-3 w-3 shrink-0 rounded-sm bg-signal-lime" />
+            <span className="font-semibold tracking-wide text-sm sm:text-base">
               structur<span className="text-fog-text">_md</span>
             </span>
           </div>
+          {/* Desktop nav */}
           <nav className="hidden gap-6 text-sm text-cloud-text sm:flex">
-            <a href="#how" className="hover:text-bone-text">Cara kerja</a>
-            <a href="#tool" className="hover:text-bone-text">Alat</a>
+            <button type="button" onClick={() => scrollToId("how")} className="min-h-[44px] hover:text-bone-text">
+              Cara kerja
+            </button>
+            <button type="button" onClick={() => scrollToId("tool")} className="min-h-[44px] hover:text-bone-text">
+              Alat
+            </button>
           </nav>
-          <a
-            href="https://github.com/khamimzarr/structur-md"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text hover:text-bone-text"
-          >
-            ★ GitHub
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="https://github.com/khamimzarr/structur-md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text hover:text-bone-text sm:inline-flex"
+            >
+              ★ GitHub
+            </a>
+            {/* Hamburger — mobile only */}
+            <button
+              type="button"
+              aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-drawer"
+              onClick={() => setMobileOpen((v) => !v)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-steel-border text-cloud-text sm:hidden active:scale-[0.97]"
+            >
+              <span className="relative block h-3.5 w-4" aria-hidden>
+                <span
+                  className={`absolute left-0 top-0 h-0.5 w-4 rounded bg-current transition-all duration-200 ${
+                    mobileOpen ? "translate-y-[6px] rotate-45" : ""
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[6px] h-0.5 w-4 rounded bg-current transition-opacity duration-150 ${
+                    mobileOpen ? "opacity-0" : "opacity-100"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[12px] h-0.5 w-4 rounded bg-current transition-all duration-200 ${
+                    mobileOpen ? "-translate-y-[6px] -rotate-45" : ""
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
+        </div>
+        {/* Mobile drawer */}
+        <div
+          id="mobile-drawer"
+          className={`grid overflow-hidden border-t border-steel-border bg-slate-canvas transition-all duration-220 ease-out sm:hidden ${
+            mobileOpen ? "max-h-[50dvh] opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <nav className="flex flex-col px-4 py-2">
+            <button
+              type="button"
+              onClick={() => scrollToId("how")}
+              className="py-3 text-left text-sm text-cloud-text hover:text-bone-text"
+            >
+              Cara kerja
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToId("tool")}
+              className="py-3 text-left text-sm text-cloud-text hover:text-bone-text"
+            >
+              Alat
+            </button>
+            <a
+              href="https://github.com/khamimzarr/structur-md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-3 text-sm text-cloud-text hover:text-bone-text"
+            >
+              ★ GitHub
+            </a>
+          </nav>
         </div>
       </header>
 
       {/* ---------- HERO ---------- */}
-      <section className="mx-auto max-w-[1200px] px-6 pb-16 pt-20 text-center">
+      <section className="mx-auto max-w-[1200px] px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-20 text-center">
         <p
           className={`hero-enter mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-steel-border px-3 py-1 text-sm text-bone-text ${mounted ? "mounted" : ""}`}
           style={{ transitionDelay: "0ms" }}
@@ -201,7 +278,7 @@ export default function Home() {
         </p>
 
         <h1
-          className={`hero-enter mx-auto max-w-4xl text-4xl font-medium leading-tight tracking-[0.02em] sm:text-5xl md:text-6xl ${mounted ? "mounted" : ""}`}
+          className={`hero-enter mx-auto max-w-4xl text-[30px] font-medium leading-[1.05] tracking-[0.02em] sm:text-5xl md:text-6xl ${mounted ? "mounted" : ""}`}
           style={{ transitionDelay: "80ms" }}
         >
           Ubah halaman web apa&nbsp;pun menjadi{" "}
@@ -210,7 +287,7 @@ export default function Home() {
         </h1>
 
         <p
-          className={`hero-enter mx-auto mt-6 max-w-[600px] text-lg leading-relaxed text-fog-text ${mounted ? "mounted" : ""}`}
+          className={`hero-enter mx-auto mt-5 max-w-[600px] text-[15px] leading-relaxed text-fog-text sm:mt-6 sm:text-lg ${mounted ? "mounted" : ""}`}
           style={{ transitionDelay: "160ms" }}
         >
           Ketik atau tempel URL. Ambil <span className="text-loop-green">konten</span> jadi Markdown,
@@ -220,7 +297,7 @@ export default function Home() {
 
         {/* ---------- MODE TOGGLE ---------- */}
         <div
-          className={`hero-enter toggle-track relative mx-auto mt-6 flex w-fit items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1 ${mounted ? "mounted" : ""}`}
+          className={`hero-enter toggle-track relative mx-auto mt-6 flex w-full max-w-[320px] items-center gap-1 rounded-full border border-steel-border bg-ink-well p-1 sm:w-fit sm:max-w-none ${mounted ? "mounted" : ""}`}
           style={{ transitionDelay: "220ms" }}
         >
           <div
@@ -237,7 +314,7 @@ export default function Home() {
               type="button"
               onClick={() => setMode(m)}
               disabled={busy}
-              className={`relative z-10 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`relative z-10 flex-1 rounded-full px-3 py-2 text-[13px] font-medium transition-colors sm:flex-none sm:px-4 sm:py-1.5 sm:text-sm ${
                 mode === m ? "text-ink-well" : "text-cloud-text hover:text-bone-text"
               }`}
             >
@@ -249,7 +326,7 @@ export default function Home() {
         {/* ---------- FORM ---------- */}
         <form
           onSubmit={handleSubmit}
-          className={`hero-enter mx-auto mt-6 flex max-w-2xl flex-col gap-3 sm:flex-row ${mounted ? "mounted" : ""}`}
+          className={`hero-enter mx-auto mt-6 flex w-full max-w-2xl flex-col gap-3 sm:flex-row ${mounted ? "mounted" : ""}`}
           style={{ transitionDelay: "300ms" }}
         >
           <input
@@ -259,12 +336,12 @@ export default function Home() {
             placeholder={mode === "design" ? "https://contoh.com" : "https://contoh.com/artikel"}
             disabled={busy}
             required
-            className="h-12 flex-1 rounded-[4px] border border-steel-border bg-ink-well px-4 text-cloud-text placeholder:text-fog-text focus:border-graphite-hairline focus:outline-none disabled:opacity-60"
+            className="h-[48px] w-full flex-1 rounded-[4px] border border-steel-border bg-ink-well px-4 text-[16px] text-cloud-text placeholder:text-fog-text focus:border-graphite-hairline focus:outline-none disabled:opacity-60 sm:h-12 sm:text-[15px]"
           />
           <button
             type="submit"
             disabled={busy}
-            className={`h-12 inline-flex items-center justify-center gap-2 rounded-[4px] px-6 font-semibold transition-all duration-200 active:scale-[0.98] ${
+            className={`h-[48px] w-full shrink-0 inline-flex items-center justify-center gap-2 rounded-[4px] px-6 text-[15px] font-semibold transition-all duration-200 active:scale-[0.98] sm:h-12 sm:w-auto ${
               busy
                 ? "btn-shimmer bg-signal-lime text-ink-well opacity-90"
                 : "bg-signal-lime text-ink-well hover:opacity-90 hover:shadow-[0_0_20px_rgba(168,255,83,0.22)]"
@@ -279,7 +356,7 @@ export default function Home() {
       </section>
 
       {/* ---------- OUTPUT AREA ---------- */}
-      <section id="tool" className="mx-auto max-w-[1200px] px-6 pb-24">
+      <section id="tool" className="mx-auto max-w-[1200px] px-4 pb-12 sm:px-6 sm:pb-24">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Terminal log */}
           <div className="card-lift overflow-hidden rounded-[4px] border border-steel-border bg-ink-well animate-fadeInUp" style={{ animationDelay: "80ms" }}>
@@ -291,7 +368,7 @@ export default function Home() {
             </div>
             <div
               ref={logRef}
-              className="h-[340px] overflow-y-auto p-4 font-mono text-sm leading-6"
+              className="h-[280px] overflow-y-auto p-3 font-mono text-[13px] leading-6 sm:h-[340px] sm:p-4 sm:text-sm"
             >
               {log.length === 0 ? (
                 <span className="code-muted">
@@ -339,7 +416,7 @@ export default function Home() {
                     {mode === "design" ? "DESIGN.md" : ".md"}
                   </span>
                 </div>
-                <pre className="md-preview h-[340px] overflow-auto p-4 text-cloud-text">
+                <pre className="md-preview h-[280px] overflow-auto p-3 text-cloud-text sm:h-[340px] sm:p-4">
                   {result.preview}
                 </pre>
               </div>
@@ -382,10 +459,11 @@ export default function Home() {
 
       {/* ---------- HOW IT WORKS ---------- */}
       <section
+        id="how"
         ref={howReveal.callbackRef}
-        className={`border-t border-steel-border py-20 reveal ${howReveal.inView ? "in" : ""}`}
+        className={`scroll-mt-20 border-t border-steel-border py-12 sm:py-20 reveal ${howReveal.inView ? "in" : ""}`}
       >
-        <div className="mx-auto max-w-[1200px] px-6">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
           <h2 className="text-center text-3xl font-medium tracking-wide">
             Bagaimana <span className="text-event-violet">caranya</span>?
           </h2>
@@ -443,9 +521,9 @@ export default function Home() {
       {/* ---------- RIWAYAT ---------- */}
       <section
         ref={histReveal.callbackRef}
-        className={`border-t border-steel-border py-16 reveal ${histReveal.inView ? "in" : ""}`}
+        className={`scroll-mt-20 border-t border-steel-border py-12 sm:py-16 reveal ${histReveal.inView ? "in" : ""}`}
       >
-        <div className="mx-auto max-w-[1200px] px-6">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
           <div className="mb-8 flex items-center justify-between">
             <h2 className="text-2xl font-medium tracking-wide">
               Riwayat <span className="text-event-violet">hasil</span>
@@ -459,9 +537,9 @@ export default function Home() {
           </div>
 
           {historyLoading ? (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[0, 1, 2].map((i) => (
-                <li key={i} className="rounded-[4px] border border-steel-border p-4">
+                <li key={i} className="rounded-[4px] border border-steel-border p-3 sm:p-4">
                   <div className="skeleton mb-2 h-4 w-3/4 rounded" />
                   <div className="skeleton mb-4 h-3 w-full rounded" />
                   <div className="skeleton h-7 w-20 rounded" />
@@ -473,11 +551,11 @@ export default function Home() {
               Belum ada hasil. Konversikan URL pertama kamu di atas.
             </p>
           ) : (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {history.map((h, idx) => (
                 <li
                   key={h.slug}
-                  className="card-lift animate-fadeInUp rounded-[4px] border border-steel-border p-4"
+                  className="card-lift animate-fadeInUp rounded-[4px] border border-steel-border p-3 sm:p-4"
                   style={{ animationDelay: `${idx * 70}ms` } as React.CSSProperties}
                 >
                   <p className="mb-1 truncate font-mono text-sm text-bone-text">{h.title}</p>
@@ -507,8 +585,8 @@ export default function Home() {
       </section>
 
       {/* ---------- FOOTER ---------- */}
-      <footer className="border-t border-steel-border py-10">
-        <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-4 px-6 sm:flex-row">
+      <footer className="border-t border-steel-border py-8 sm:py-10">
+        <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:gap-4 sm:px-6">
           <p className="text-sm text-fog-text">
             structur<span className="text-cloud-text">_md</span> — Next.js ·
             Supabase Storage · Vercel
