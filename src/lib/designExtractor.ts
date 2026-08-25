@@ -249,7 +249,7 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
     resolvedVars[k] = /^#[0-9a-f]{3,8}$/.test(r) ? r : v;
   }
 
-  // Bersihkan scale numerik.
+  // Bersihkan scale — skip nilai internal Tailwind (calc/var/--tw-) agar Spacing bersih.
   const toPx = (val: string): number | null => {
     const t = val.trim().toLowerCase();
     if (t.endsWith("rem") || t.endsWith("em")) return 16 * parseFloat(t);
@@ -261,8 +261,10 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
     const out: string[] = [];
     const seen = new Set<string>();
     for (const raw of vals) {
+      if (/calc|var\(|--tw-|\(|\)/.test(raw)) continue;
       for (const tok of raw.split(/\s+/).filter(Boolean)) {
         if (drop.test(tok)) continue;
+        if (/calc|var\(|--tw-/.test(tok)) continue;
         const px = toPx(tok);
         const key = px !== null ? `${Math.round(px)}px` : tok;
         if (seen.has(key)) continue;
