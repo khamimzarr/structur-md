@@ -36,6 +36,10 @@ export interface ComponentSpec {
 export interface DesignResult {
   url: string;
   title: string;
+  requestedUrl?: string;
+  finalUrl?: string;
+  redirected?: boolean;
+  warning?: string;
   library?: string; // deteksi framework styling (tailwind/emotion/styled-components/css-modules)
   tokens: DesignTokens;
   components: ComponentSpec[];
@@ -391,6 +395,18 @@ function detectLibrary(html: string, $: cheerio.CheerioAPI): string | undefined 
 
 export async function extractDesign(rawUrl: string): Promise<DesignResult> {
   const scraped = await scrapeUrl(rawUrl, { timeoutMs: 15000 });
+  const redirected = scraped.redirected;
+  const requestedUrl = scraped.requestedUrl;
+  const finalUrl = scraped.finalUrl;
+  let warning: string | undefined;
+  if (redirected) {
+    try {
+      const p = new URL(finalUrl).pathname;
+      if (/\/(login|signin|sign-in|auth|register)/i.test(p)) {
+        warning = "Halaman dialihkan ke login — DESIGN diambil dari halaman login, bukan dashboard. Coba URL publik tanpa login.";
+      }
+    } catch {}
+  }
   const $ = cheerio.load(scraped.mainHtml);
 
   const combined = await collectCss(scraped.html, scraped.url);
@@ -406,6 +422,10 @@ export async function extractDesign(rawUrl: string): Promise<DesignResult> {
   return {
     url: scraped.url,
     title: scraped.title,
+    requestedUrl,
+    finalUrl,
+    redirected,
+    warning,
     library: detectLibrary(scraped.html, $),
     tokens,
     components,

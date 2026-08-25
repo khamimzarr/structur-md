@@ -16,6 +16,8 @@ export function renderDesignMd(d: DesignResult): string {
   L.push(`# DESIGN.md — ${d.title}`);
   L.push("");
   L.push(`> Ekstrak otomatis dari ${d.url}`);
+  if (d.requestedUrl && d.redirected && d.requestedUrl !== d.url) L.push(`> Diminta: ${d.requestedUrl} → ${d.url}`);
+  if (d.warning) { L.push(`> ⚠️ ${d.warning}`); L.push(""); }
   L.push("> Nilai CSS di bawah diambil dari source stylesheet & inline style halaman.");
   if (d.library) L.push(`> Styling: **${d.library}**`);
   L.push("");

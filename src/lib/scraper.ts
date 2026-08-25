@@ -115,7 +115,10 @@ const MAIN_SELECTORS = [
 ];
 
 export interface ScrapeResult {
-  url: string;
+  url: string; // final URL setelah redirect (bila ada)
+  requestedUrl: string; // URL yang diminta user
+  finalUrl: string;
+  redirected: boolean;
   title: string;
   mainHtml: string;
   html: string; // dokumen HTML penuh (untuk ekstraksi desain: <style>/<link> di <head>)
@@ -142,6 +145,7 @@ export async function scrapeUrl(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   let html: string;
+  let finalUrl = url.toString();
   try {
     const res = await fetch(url.toString(), {
       signal: controller.signal,
@@ -153,6 +157,8 @@ export async function scrapeUrl(
         "accept-language": "id,en;q=0.8",
       },
     });
+
+    finalUrl = res.url || url.toString();
 
     if (!res.ok) {
       throw new ApiError(
@@ -213,5 +219,6 @@ export async function scrapeUrl(
     throw new ApiError(502, "Halaman tidak mengandung konten yang bisa di-scrape.", "EMPTY_CONTENT");
   }
 
-  return { url: url.toString(), title, mainHtml, html };
+  const redirected = finalUrl !== url.toString();
+  return { url: finalUrl, requestedUrl: url.toString(), finalUrl, redirected, title, mainHtml, html };
 }

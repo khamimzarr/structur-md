@@ -16,7 +16,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
-const MAX_PREVIEW = 4000;
+const MAX_PREVIEW = 8000;
 
 interface DesignRequest {
   url?: string;
@@ -45,11 +45,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   let md: string;
   let title: string;
   let finalUrl: string;
+  let requestedUrl: string | undefined;
+  let redirected: boolean | undefined;
+  let warning: string | undefined;
   try {
     const result = await extractDesign(rawUrl);
     md = renderDesignMd(result);
     title = result.title;
     finalUrl = result.url;
+    requestedUrl = (result as unknown as { requestedUrl?: string }).requestedUrl;
+    redirected = (result as unknown as { redirected?: boolean }).redirected;
+    warning = (result as unknown as { warning?: string }).warning;
   } catch (err) {
     const m = err instanceof Error ? err.message : "ekstraksi gagal";
     return jsonError(502, `Gagal mengekstrak desain: ${m}`, "DESIGN_ERROR");
@@ -93,9 +99,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       ok: true,
       title,
       url: finalUrl,
+      requestedUrl,
+      finalUrl,
+      redirected,
+      warning,
       slug,
       downloadUrl: pub.publicUrl,
-      preview: md.slice(0, MAX_PREVIEW),
+      preview: md.slice(0, MAX_PREVIEW) + (md.length > MAX_PREVIEW ? "\n\n---\n*Preview terpotong 8000 karakter — Download .md untuk file lengkap.*" : ""),
     },
     { status: 200 }
   );

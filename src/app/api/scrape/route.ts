@@ -118,15 +118,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("DB insert warning:", dbError.message);
   }
 
-  // --- 6. Return ke frontend ---
+  // --- 6. Return ke frontend (+ warning bila redirect ke login) ---
+  const redirected = scraped.redirected && scraped.finalUrl !== scraped.requestedUrl;
+  const isLoginRedirect = redirected && /\/(login|signin|sign-in|auth)/i.test(new URL(scraped.finalUrl).pathname);
   return NextResponse.json(
     {
       ok: true,
       title: converted.title,
       url: scraped.url,
+      requestedUrl: scraped.requestedUrl,
+      finalUrl: scraped.finalUrl,
+      redirected,
+      warning: isLoginRedirect
+        ? "Halaman dialihkan ke login — konten yang di-scrape adalah halaman login, bukan dashboard. Coba URL publik tanpa login."
+        : redirected
+          ? `Dialihkan: ${scraped.requestedUrl} → ${scraped.finalUrl}`
+          : undefined,
       slug,
       downloadUrl: publicData.publicUrl,
-      preview: converted.markdown.slice(0, 4000),
+      preview: converted.markdown.slice(0, 8000),
     },
     { status: 200 }
   );

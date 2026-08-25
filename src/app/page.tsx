@@ -8,6 +8,10 @@ interface ScrapeResponse {
   ok: boolean;
   title?: string;
   url?: string;
+  requestedUrl?: string;
+  finalUrl?: string;
+  redirected?: boolean;
+  warning?: string;
   slug?: string;
   downloadUrl?: string;
   preview?: string;
@@ -217,6 +221,13 @@ export default function Home() {
           pushLine(setLog, `✓ DESIGN.md siap — ${(data.preview?.length ?? 0)}+ karakter`);
         } else {
           pushLine(setLog, `✓ markdown siap — ${(data.preview?.length ?? 0)}+ karakter`);
+        }
+        if (data.warning) {
+          pushLine(setLog, `! ${data.warning}`, "err");
+          setError(data.warning);
+        }
+        if (data.redirected && data.finalUrl && data.finalUrl !== data.requestedUrl) {
+          pushLine(setLog, `→ redirect: ${data.requestedUrl} → ${data.finalUrl}`, "muted");
         }
         pushLine(setLog, `✓ upload sukses → ${data.downloadUrl}`);
         pushLine(setLog, "exited(0)", "ok");
@@ -540,6 +551,25 @@ export default function Home() {
             {error && (
               <div className="animate-scaleIn rounded-[4px] border border-mute-red/40 bg-ink-well p-4">
                 <p className="text-sm font-medium text-mute-red">✕ {error}</p>
+                {result?.warning && result.warning !== error && (
+                  <p className="mt-1 font-mono text-xs text-fog-text">{result.warning}</p>
+                )}
+                {result?.redirected && result.finalUrl && (
+                  <p className="mt-1 font-mono text-[11px] text-fog-text break-all">
+                    → {result.requestedUrl} → {result.finalUrl}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {result?.warning && !error && (
+              <div className="animate-scaleIn rounded-[4px] border border-amber-400/25 bg-amber-400/10 p-3">
+                <p className="font-mono text-xs font-medium text-amber-300">⚠ {result.warning}</p>
+                {result.finalUrl && (
+                  <p className="mt-1 font-mono text-[11px] text-fog-text break-all">
+                    {result.requestedUrl} → {result.finalUrl}
+                  </p>
+                )}
               </div>
             )}
 
@@ -579,6 +609,9 @@ export default function Home() {
                 {tab === "raw" ? (
                   <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
                     {result.preview}
+                    {result.preview && result.preview.length >= 7950 && (
+                      <span className="code-muted">\n\n— preview 8000 chr, Download untuk lengkap —</span>
+                    )}
                   </pre>
                 ) : (
                   <div className="rendered-md h-[280px] overflow-auto p-4 sm:h-[340px] sm:p-5">
