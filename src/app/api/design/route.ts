@@ -16,7 +16,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
-const MAX_PREVIEW = 8000;
+const MAX_PREVIEW = 30000; // naik dari 8000 — DESIGN tebal (refero ~15-20k) biar gak kepotong, fetch full tetap via downloadUrl
 
 interface DesignRequest {
   url?: string;
@@ -105,7 +105,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       warning,
       slug,
       downloadUrl: pub.publicUrl,
-      preview: md.slice(0, MAX_PREVIEW) + (md.length > MAX_PREVIEW ? "\n\n---\n*Preview terpotong 8000 karakter — Download .md untuk file lengkap.*" : ""),
+      preview: md.slice(0, MAX_PREVIEW) + (md.length > MAX_PREVIEW ? `\n\n---\n*Preview terpotong ${MAX_PREVIEW.toLocaleString("id-ID")} karakter dari ${md.length.toLocaleString("id-ID")} — Download untuk lengkap atau Muat lengkap di preview.*` : ""),
+      truncated: md.length > MAX_PREVIEW,
+      totalChars: md.length,
     },
     { status: 200 }
   );

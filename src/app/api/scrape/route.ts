@@ -118,9 +118,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("DB insert warning:", dbError.message);
   }
 
-  // --- 6. Return ke frontend (+ warning bila redirect ke login) ---
+  // --- 6. Return ke frontend (+ warning bila redirect ke login / SPA tipis) ---
   const redirected = scraped.redirected && scraped.finalUrl !== scraped.requestedUrl;
   const isLoginRedirect = redirected && /\/(login|signin|sign-in|auth)/i.test(new URL(scraped.finalUrl).pathname);
+  const warning = isLoginRedirect
+    ? "Halaman dialihkan ke login — konten yang di-scrape adalah halaman login, bukan dashboard. Coba URL publik tanpa login."
+    : scraped.spaWarning
+      ? scraped.spaWarning
+      : redirected
+        ? `Dialihkan: ${scraped.requestedUrl} → ${scraped.finalUrl}`
+        : undefined;
   return NextResponse.json(
     {
       ok: true,
@@ -129,14 +136,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       requestedUrl: scraped.requestedUrl,
       finalUrl: scraped.finalUrl,
       redirected,
-      warning: isLoginRedirect
-        ? "Halaman dialihkan ke login — konten yang di-scrape adalah halaman login, bukan dashboard. Coba URL publik tanpa login."
-        : redirected
-          ? `Dialihkan: ${scraped.requestedUrl} → ${scraped.finalUrl}`
-          : undefined,
+      warning,
       slug,
       downloadUrl: publicData.publicUrl,
-      preview: converted.markdown.slice(0, 8000),
+      preview: converted.markdown.slice(0, 30000) + (converted.markdown.length > 30000 ? `\n\n---\n*Preview terpotong 30rb karakter dari ${converted.markdown.length.toLocaleString("id-ID")} — Download untuk lengkap.*` : ""),
+      truncated: converted.markdown.length > 30000,
+      totalChars: converted.markdown.length,
     },
     { status: 200 }
   );

@@ -15,6 +15,8 @@ interface ScrapeResponse {
   slug?: string;
   downloadUrl?: string;
   preview?: string;
+  truncated?: boolean;
+  totalChars?: number;
   error?: string;
   code?: string;
 }
@@ -278,14 +280,40 @@ export default function Home() {
   };
 
   const copyMarkdown = async () => {
-    if (!result?.preview) return;
+    // kalau truncated, ambil full dari storage biar copy lengkap
+    let text = result?.preview ?? "";
+    if (result?.truncated && result?.downloadUrl) {
+      try {
+        const r = await fetch(result.downloadUrl);
+        if (r.ok) text = await r.text();
+      } catch {}
+    }
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(result.preview);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
-      showToast("Disalin ✓");
+      showToast(result?.truncated ? "Disalin (full) ✓" : "Disalin ✓");
       setTimeout(() => setCopied(false), 1400);
     } catch {
       showToast("Gagal — salin manual");
+    }
+  };
+
+  const [loadingFull, setLoadingFull] = useState(false);
+  const loadFullPreview = async () => {
+    if (!result?.downloadUrl) return;
+    setLoadingFull(true);
+    try {
+      const r = await fetch(result.downloadUrl);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const full = await r.text();
+      setResult((prev) => (prev ? { ...prev, preview: full, truncated: false, totalChars: full.length } : prev));
+      showToast("Full dimuat ✓");
+      pushLine(setLog, `✓ full preview dimuat — ${full.length.toLocaleString("id-ID")} chr`, "ok");
+    } catch {
+      showToast("Gagal muat full");
+    } finally {
+      setLoadingFull(false);
     }
   };
 
@@ -598,10 +626,22 @@ export default function Home() {
                         Preview
                       </button>
                     </div>
-                    <span className="font-mono text-[11px] text-fog-text">
-                      {(result.preview?.length ?? 0).toLocaleString("id-ID")} chr · {wordCount.toLocaleString("id-ID")} words ·{" "}
-                      <span className="hl hl-ink text-[11px]">{mode === "design" ? "DESIGN.md" : "Scrape.md"}</span>
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[11px] text-fog-text">
+                        {(result.preview?.length ?? 0).toLocaleString("id-ID")} chr · {wordCount.toLocaleString("id-ID")} words ·{" "}
+                        <span className="hl hl-ink text-[11px]">{mode === "design" ? "DESIGN.md" : "Scrape.md"}</span>
+                      </span>
+                      {result.truncated && (
+                        <button
+                          type="button"
+                          onClick={loadFullPreview}
+                          disabled={loadingFull}
+                          className="rounded-full border border-signal-lime/30 bg-signal-lime/10 px-2.5 py-1 font-mono text-[11px] font-semibold text-signal-lime hover:bg-signal-lime/15 disabled:opacity-50"
+                        >
+                          {loadingFull ? "..." : "Muat full"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -609,8 +649,8 @@ export default function Home() {
                 {tab === "raw" ? (
                   <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
                     {result.preview}
-                    {result.preview && result.preview.length >= 7950 && (
-                      <span className="code-muted">\n\n— preview 8000 chr, Download untuk lengkap —</span>
+                    {result.truncated && (
+                      <span className="code-muted">\n\n— terpotong {result.totalChars?.toLocaleString("id-ID")} total, klik “Muat full” atau Download —</span>
                     )}
                   </pre>
                 ) : (

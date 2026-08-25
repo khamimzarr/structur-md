@@ -119,6 +119,7 @@ export interface ScrapeResult {
   requestedUrl: string; // URL yang diminta user
   finalUrl: string;
   redirected: boolean;
+  spaWarning?: string;
   title: string;
   mainHtml: string;
   html: string; // dokumen HTML penuh (untuk ekstraksi desain: <style>/<link> di <head>)
@@ -202,23 +203,40 @@ export async function scrapeUrl(
 
   const title = $("title").first().text().trim().slice(0, 200) || "Untitled";
 
+  // Hybrid: kalau halaman Next.js RSC streaming (self.__next_f), body statis tipis — 
+  // list item ada di flight payload, bukan DOM statis. Tetap ambil body, tapi deteksi SPA tipis.
+  // Kalau text body < ~2000 chr dan ada __next_f, berarti SPA — ambil full body apa adanya.
+  const bodyTextLen = $("body").text().trim().length;
+  const isSpaThin = bodyTextLen < 1200 && html.includes("self.__next_f");
+
   // Ambil konten utama (tipe diinferensi dari $ agar tidak bergantung nama internal).
   let root: ReturnType<typeof $> | null = null;
-  for (const sel of MAIN_SELECTORS) {
-    const el = $(sel).first();
-    if (el.length && (el.text().trim().length ?? 0) > 40) {
-      root = el;
-      break;
+  if (!isSpaThin) {
+    for (const sel of MAIN_SELECTORS) {
+      const el = $(sel).first();
+      if (el.length && (el.text().trim().length ?? 0) > 40) {
+        root = el;
+        break;
+      }
     }
   }
   // Ambil elemen pertama (bukan dokumen) untuk diserialisasi.
   const node = (root && root.length ? root : $("body")).get(0) as ReturnType<typeof $>["0"] | undefined;
-  const mainHtml = node ? $.html(node) ?? "" : "";
+  let mainHtml = node ? $.html(node) ?? "" : "";
+
+  // Fallback: kalau mainHtml masih tipis (<500 chr) padahal body ada, pakai body
+  if (mainHtml.trim().length < 500 && $("body").html()?.trim()) {
+    mainHtml = $.html($("body")) ?? mainHtml;
+  }
 
   if (mainHtml.trim().length < 10) {
     throw new ApiError(502, "Halaman tidak mengandung konten yang bisa di-scrape.", "EMPTY_CONTENT");
   }
 
   const redirected = finalUrl !== url.toString();
-  return { url: finalUrl, requestedUrl: url.toString(), finalUrl, redirected, title, mainHtml, html };
+  // spaHint gak usah masuk title — cukup jadi warning terpisah biar markdown tetap bersih
+  const spaWarning = isSpaThin
+    ? "Halaman ini memuat konten dinamis (Next.js streaming). Sebagian daftar mungkin kosong — buka di browser untuk daftar lengkap."
+    : undefined;
+  return { url: finalUrl, requestedUrl: url.toString(), finalUrl, redirected, title, mainHtml, html, spaWarning };
 }
