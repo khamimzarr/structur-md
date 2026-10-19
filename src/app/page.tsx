@@ -508,7 +508,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setUrl("")}
-                    className="shrink-0 rounded px-1.5 py-1 font-mono text-xs text-fog-text hover:text-bone-text"
+                    className="tap-44 shrink-0 rounded px-2 py-1 font-mono text-xs text-fog-text hover:text-bone-text"
                     aria-label="hapus"
                   >
                     ✕
@@ -637,14 +637,14 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setTab("raw")}
-                        className={`rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "raw" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        className={`tap-44 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "raw" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
                       >
                         Raw
                       </button>
                       <button
                         type="button"
                         onClick={() => setTab("rendered")}
-                        className={`rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "rendered" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        className={`tap-44 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "rendered" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
                       >
                         Preview
                       </button>
@@ -659,7 +659,7 @@ export default function Home() {
                           type="button"
                           onClick={loadFullPreview}
                           disabled={loadingFull}
-                          className="rounded-full border border-signal-lime/30 bg-signal-lime/10 px-2.5 py-1 font-mono text-[11px] font-semibold text-signal-lime hover:bg-signal-lime/15 disabled:opacity-50"
+                          className="tap-44 rounded-full border border-signal-lime/30 bg-signal-lime/10 px-3 py-1 font-mono text-[11px] font-semibold text-signal-lime hover:bg-signal-lime/15 disabled:opacity-50"
                         >
                           {loadingFull ? "..." : "Muat full"}
                         </button>
@@ -692,12 +692,12 @@ export default function Home() {
 
             {result?.ok && (
               <div className="animate-fadeIn flex gap-3">
-                <button onClick={download} className="flex-1 rounded-[4px] bg-signal-lime px-4 py-2.5 font-mono text-sm font-semibold text-ink-well transition-opacity hover:opacity-90">
+                <button onClick={download} className="tap-44 flex-1 justify-center rounded-[4px] bg-signal-lime px-4 py-2.5 font-mono text-sm font-semibold text-ink-well transition-opacity hover:opacity-90">
                   Download
                 </button>
                 <button
                   onClick={copyMarkdown}
-                  className={`flex-1 rounded-[4px] border px-4 py-2.5 font-mono text-sm transition-colors ${copied ? "border-signal-lime/40 bg-signal-lime/10 text-signal-lime" : "border-graphite-hairline text-cloud-text hover:text-bone-text"}`}
+                  className={`tap-44 flex-1 justify-center rounded-[4px] border px-4 py-2.5 font-mono text-sm transition-colors ${copied ? "border-signal-lime/40 bg-signal-lime/10 text-signal-lime" : "border-graphite-hairline text-cloud-text hover:text-bone-text"}`}
                 >
                   {copied ? "✓ Disalin" : "Copy"}
                 </button>
@@ -705,7 +705,7 @@ export default function Home() {
                   href={result.downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 rounded-[4px] border border-graphite-hairline px-4 py-2.5 text-center font-mono text-sm text-cloud-text transition-colors hover:text-bone-text"
+                  className="tap-44 flex-1 justify-center rounded-[4px] border border-graphite-hairline px-4 py-2.5 text-center font-mono text-sm text-cloud-text transition-colors hover:text-bone-text"
                 >
                   Buka
                 </a>
