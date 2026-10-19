@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://structur-md.vercel.app"),
   title: {
     default: "Structur-md — URL → Scrape.md / DESIGN.md",
     template: "%s — Structur-md",
@@ -11,7 +12,22 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Structur-md" },
   formatDetection: { telephone: false },
-  openGraph: { title: "Structur-md — URL → Markdown", description: "Scrape URL → Markdown instan", type: "website" },
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Structur-md — URL → Markdown instan",
+    description: "Tempel link, jadi Scrape.md atau DESIGN.md siap pakai.",
+    type: "website",
+    url: "/",
+    siteName: "Structur-md",
+    locale: "id_ID",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Structur-md — URL apapun jadi .md instan" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Structur-md — URL → Markdown instan",
+    description: "Tempel link, jadi Scrape.md atau DESIGN.md siap pakai.",
+    images: ["/og.png"],
+  },
   icons: {
     icon: [
       { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
@@ -36,9 +52,6 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id">
-      <head>
-        <link rel="apple-touch-icon" href="/icon-180.png" />
-      </head>
       <body>
         {children}
         <script

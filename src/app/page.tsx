@@ -485,7 +485,7 @@ export default function Home() {
 
             <div className="px-4 pt-3 font-mono text-xs text-fog-text sm:px-6 sm:pt-4">
               <span className="text-signal-lime">$</span> structur-md {mode === "design" ? "extract-design" : "scrape"}{" "}
-              <span className="text-cloud-text">--url</span> <span className="text-fog-text/70">[tempel di bawah]</span>
+              <span className="text-cloud-text">--url</span> <span className="text-fog-text/90">[tempel di bawah]</span>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4 sm:px-6 sm:pb-4 lg:gap-4">
@@ -772,7 +772,9 @@ export default function Home() {
             <h2 className="font-mono text-xl font-medium tracking-wide">Riwayat</h2>
             <button
               onClick={clearHistory}
-              className="rounded-[4px] border border-graphite-hairline px-3 py-1.5 font-mono text-xs text-cloud-text transition hover:text-bone-text active:scale-[0.98]"
+              disabled={history.length === 0}
+              aria-disabled={history.length === 0}
+              className="tap-44 rounded-[4px] border border-graphite-hairline px-3 py-1.5 font-mono text-xs text-cloud-text transition hover:text-bone-text active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-cloud-text"
             >
               Hapus
             </button>

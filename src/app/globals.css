@@ -333,3 +333,11 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Tap target di perangkat sentuh: minimal 44px (Apple HIG / WCAG 2.5.5).
+   Desktop tidak diubah supaya kerapatan visual tetap sama. */
+@media (pointer: coarse) {
+  .chip { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+  .toggle-btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tap-44 { min-height: 44px; display: inline-flex; align-items: center; }
+}
