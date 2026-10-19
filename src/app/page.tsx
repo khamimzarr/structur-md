@@ -379,7 +379,7 @@ export default function Home() {
               aria-expanded={mobileOpen}
               aria-controls="mobile-drawer"
               onClick={() => setMobileOpen((v) => !v)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-steel-border text-cloud-text sm:hidden active:scale-[0.97]"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-steel-border text-cloud-text sm:hidden active:scale-[0.97]"
             >
               <span className="relative block h-3.5 w-4" aria-hidden>
                 <span
@@ -809,7 +809,7 @@ export default function Home() {
                         href={h.downloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-[4px] bg-signal-lime px-3 py-1 text-xs font-semibold text-ink-well hover:opacity-90"
+                        className="tap-44 rounded-[4px] bg-signal-lime px-3 py-1 text-xs font-semibold text-ink-well hover:opacity-90"
                       >
                         Buka .md
                       </a>
