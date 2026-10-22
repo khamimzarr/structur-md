@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { extractDesign } from "@/lib/designExtractor";
 import { renderDesignMd } from "@/lib/renderDesignMd";
 import { renderTokenFormats } from "@/lib/renderTokens";
+import { interpretDesign, aiEnabled } from "@/lib/aiInterpret";
 import { uploadExtraFiles, type ExtraFile } from "@/lib/uploadExtras";
 import { getServiceClient, getBucket } from "@/lib/supabase";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -52,16 +53,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   let warning: string | undefined;
   let cssRaw: string | undefined;
   let tokens = { tailwindV4: "", cssVariables: "" };
+  let interp: import("@/lib/aiInterpret").DesignInterpretation | null = null;
   try {
     const result = await extractDesign(rawUrl);
-    md = renderDesignMd(result);
+    tokens = renderTokenFormats(result);
+    // Lapisan AI: narasi + role warna + do/don't + prompt guide (non-fatal).
+    interp = await interpretDesign(result);
+    md = renderDesignMd(result, interp);
     title = result.title;
     finalUrl = result.url;
     requestedUrl = (result as unknown as { requestedUrl?: string }).requestedUrl;
     redirected = (result as unknown as { redirected?: boolean }).redirected;
     warning = (result as unknown as { warning?: string }).warning;
     cssRaw = result.css;
-    tokens = renderTokenFormats(result);
   } catch (err) {
     const m = err instanceof Error ? err.message : "ekstraksi gagal";
     return jsonError(502, `Gagal mengekstrak desain: ${m}`, "DESIGN_ERROR");
@@ -122,6 +126,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       slug,
       downloadUrl: pub.publicUrl,
       extraFiles,
+      aiEnabled: aiEnabled(),
+      hasAi: Boolean(interp),
       formats: {
         "design.md": md,
         "tailwind-v4.css": tokens.tailwindV4 || undefined,

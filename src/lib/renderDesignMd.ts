@@ -11,7 +11,7 @@ function fmtDecls(decls: Record<string, string>): string {
   return lines.join("\n");
 }
 
-export function renderDesignMd(d: DesignResult): string {
+export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret").DesignInterpretation | null): string {
   const L: string[] = [];
   L.push(`# DESIGN.md — ${d.title}`);
   L.push("");
@@ -23,6 +23,52 @@ export function renderDesignMd(d: DesignResult): string {
   L.push("");
   L.push("---");
   L.push("");
+
+  // ---- Interpretasi AI (bila tersedia) ----
+  if (interp) {
+    L.push("## Gaya");
+    L.push("");
+    L.push(interp.narrative);
+    L.push("");
+    if (Object.keys(interp.colorRoles).length) {
+      L.push("### Peran warna");
+      L.push("");
+      L.push("| Warna | Peran |");
+      L.push("|-------|-------|");
+      for (const [c, role] of Object.entries(interp.colorRoles)) {
+        L.push(`| \`${c}\` | ${role} |`);
+      }
+      L.push("");
+    }
+    if (interp.dos.length || interp.donts.length) {
+      L.push("### Do & Don't");
+      L.push("");
+      if (interp.dos.length) {
+        L.push("**Lakukan:**");
+        L.push("");
+        for (const x of interp.dos) L.push(`- ${x}`);
+        L.push("");
+      }
+      if (interp.donts.length) {
+        L.push("**Hindari:**");
+        L.push("");
+        for (const x of interp.donts) L.push(`- ${x}`);
+        L.push("");
+      }
+    }
+    if (interp.prompts.length) {
+      L.push("### Agent Prompt Guide");
+      L.push("");
+      L.push("> Prompt siap pakai untuk AI builder (Cursor, v0, Claude) membangun section khas gaya ini.");
+      L.push("");
+      for (const p of interp.prompts) {
+        L.push(`- ${p}`);
+      }
+      L.push("");
+    }
+    L.push("---");
+    L.push("");
+  }
 
   // ---- Tokens: Colors ----
   L.push("## Tokens — Colors");
