@@ -261,16 +261,19 @@ export async function scrapeUrl(
   if (mainHtml.trim().length < 500 && $("body").html()?.trim()) {
     mainHtml = $.html($("body")) ?? mainHtml;
   }
+  // Node sumber konten final (dipakai deteksi error-page): body bila fallback aktif.
+  const usedBodyFallback = mainHtml.trim().length >= 500 && mainHtml === ($.html($("body")) ?? "");
+  const errorCheckNode = usedBodyFallback || !root || !root.length ? $("body") : root;
 
   if (mainHtml.trim().length < 10) {
     throw new ApiError(502, "Halaman tidak mengandung konten yang bisa di-scrape.", "EMPTY_CONTENT");
   }
 
   // Deteksi halaman error/anti-bot SEBELUM dijadikan .md.
-  // Cek teks konten yang BENAR-BENAR dijadikan markdown (root/mainHtml),
-  // bukan seluruh <body> — halaman error GitHub punya <body> besar (boilerplate
-  // nav/footer > 4000 char) padahal konten utamanya tipis dan penuh frasa error.
-  const errorCheckNode = root && root.length ? root : $("body");
+  // Cek teks node FINAL yang dijadikan markdown — setelah fallback tipis ke body.
+  // Halaman error GitHub punya <article>/<main> kecil (boilerplate saja) tapi
+  // fallback memakai seluruh <body> yang penuh frasa error; cek harus mengikuti
+  // sumber konten yang sebenarnya.
   const errorReason = looksLikeErrorPage(
     title,
     errorCheckNode.text().replace(/\s+/g, " ").trim()
