@@ -20,6 +20,8 @@ interface ScrapeResponse {
   preview?: string;
   truncated?: boolean;
   totalChars?: number;
+  aiEnabled?: boolean;
+  hasAi?: boolean;
   error?: string;
   code?: string;
 }
@@ -632,6 +634,7 @@ export default function Home() {
                     <span className="truncate font-mono text-xs text-fog-text">{result.title}</span>
                     <span className="hl hl-lime inline-flex items-center gap-1 text-[11px]">
                       Done
+                      {result.hasAi && <span className="text-syntax-violet" title="Interpretasi gaya oleh AI">✨ AI</span>}
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden className="shrink-0">
                         <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="done-tick" pathLength={18} />
                       </svg>
