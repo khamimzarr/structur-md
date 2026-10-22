@@ -43,6 +43,7 @@ export function PwaEnhancer({
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
+          setTimeout(() => setInstallable(true), 4000);
       setDeferred(e);
       setInstallable(true);
     };
@@ -80,7 +81,7 @@ export function PwaEnhancer({
 
   if (!installable && !offline) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[57px] z-20 flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-16 z-20 flex justify-center px-4 sm:bottom-6">
       <div className="pointer-events-auto flex items-center gap-2">
         {offline && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/15 px-3 py-1 font-mono text-xs text-amber-200">
@@ -88,13 +89,23 @@ export function PwaEnhancer({
           </span>
         )}
         {installable && (
-          <button
-            type="button"
-            onClick={install}
-            className="inline-flex items-center gap-2 rounded-full bg-signal-lime px-3.5 py-1.5 font-mono text-xs font-semibold text-white shadow-[0_4px_20px_rgba(10,107,77,0.25)] hover:opacity-90 active:scale-[0.98]"
-          >
-            ↓ Install App
-          </button>
+          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-[#e5e7eb] bg-white p-1 pl-3 shadow-[0_4px_20px_rgba(2,44,34,0.12)]">
+            <button
+              type="button"
+              onClick={install}
+              className="inline-flex items-center gap-2 rounded-full bg-signal-lime px-3 py-1.5 font-mono text-xs font-semibold text-white hover:opacity-90 active:scale-[0.98]"
+            >
+              ↓ Install App
+            </button>
+            <button
+              type="button"
+              onClick={() => setInstallable(false)}
+              aria-label="Tutup"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full font-mono text-xs text-fog-text hover:text-bone-text"
+            >
+              ✕
+            </button>
+          </div>
         )}
       </div>
     </div>
