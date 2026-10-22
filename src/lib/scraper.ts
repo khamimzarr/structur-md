@@ -267,7 +267,14 @@ export async function scrapeUrl(
   }
 
   // Deteksi halaman error/anti-bot SEBELUM dijadikan .md.
-  const errorReason = looksLikeErrorPage(title, $("body").text().replace(/\s+/g, " ").trim());
+  // Cek teks konten yang BENAR-BENAR dijadikan markdown (root/mainHtml),
+  // bukan seluruh <body> — halaman error GitHub punya <body> besar (boilerplate
+  // nav/footer > 4000 char) padahal konten utamanya tipis dan penuh frasa error.
+  const errorCheckNode = root && root.length ? root : $("body");
+  const errorReason = looksLikeErrorPage(
+    title,
+    errorCheckNode.text().replace(/\s+/g, " ").trim()
+  );
   if (errorReason) {
     throw new ApiError(422, errorReason, "ERROR_PAGE_DETECTED");
   }
