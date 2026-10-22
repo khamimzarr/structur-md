@@ -11,6 +11,8 @@
 import { NextResponse } from "next/server";
 import { extractDesign } from "@/lib/designExtractor";
 import { renderDesignMd } from "@/lib/renderDesignMd";
+import { renderTokenFormats } from "@/lib/renderTokens";
+import { uploadExtraFiles, type ExtraFile } from "@/lib/uploadExtras";
 import { getServiceClient, getBucket } from "@/lib/supabase";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -48,6 +50,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   let requestedUrl: string | undefined;
   let redirected: boolean | undefined;
   let warning: string | undefined;
+  let cssRaw: string | undefined;
+  let tokens = { tailwindV4: "", cssVariables: "" };
   try {
     const result = await extractDesign(rawUrl);
     md = renderDesignMd(result);
@@ -56,6 +60,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     requestedUrl = (result as unknown as { requestedUrl?: string }).requestedUrl;
     redirected = (result as unknown as { redirected?: boolean }).redirected;
     warning = (result as unknown as { warning?: string }).warning;
+    cssRaw = result.css;
+    tokens = renderTokenFormats(result);
   } catch (err) {
     const m = err instanceof Error ? err.message : "ekstraksi gagal";
     return jsonError(502, `Gagal mengekstrak desain: ${m}`, "DESIGN_ERROR");
@@ -84,6 +90,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const { data: pub } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
+  // File tambahan: format token (Tailwind v4, CSS Variables) — berkas terpisah.
+  let extraFiles: ExtraFile[] = [];
+  const extras: Array<{ name: string; content: string }> = [];
+  if (tokens.tailwindV4) extras.push({ name: "tailwind-v4.css", content: tokens.tailwindV4 });
+  if (tokens.cssVariables) extras.push({ name: "css-variables.css", content: tokens.cssVariables });
+  if (cssRaw?.trim()) extras.push({ name: "styles-raw.css", content: cssRaw });
+  if (extras.length) {
+    extraFiles = await uploadExtraFiles(supabase, bucket, slug, extras);
+  }
+
   const { error: dbError } = await supabase.from("scrapes").insert({
     url: finalUrl,
     title,
@@ -105,6 +121,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       warning,
       slug,
       downloadUrl: pub.publicUrl,
+      extraFiles,
+      formats: {
+        "design.md": md,
+        "tailwind-v4.css": tokens.tailwindV4 || undefined,
+        "css-variables.css": tokens.cssVariables || undefined,
+      },
       preview: md.slice(0, MAX_PREVIEW) + (md.length > MAX_PREVIEW ? `\n\n---\n*Preview terpotong ${MAX_PREVIEW.toLocaleString("id-ID")} karakter dari ${md.length.toLocaleString("id-ID")} — Download untuk lengkap atau Muat lengkap di preview.*` : ""),
       truncated: md.length > MAX_PREVIEW,
       totalChars: md.length,
