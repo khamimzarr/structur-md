@@ -13,11 +13,26 @@ function fmtDecls(decls: Record<string, string>): string {
 
 export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret").DesignInterpretation | null): string {
   const L: string[] = [];
-  L.push(`# DESIGN.md — ${d.title}`);
+  // Heading ala refero: "# <Judul> — Style Reference" + tagline satu kalimat.
+  const title = (d.title || "Untitled").replace(/\s*[|·—-]\s*(GitHub|Homepage|Website).*$/i, "").trim() || "Untitled";
+  L.push(`# ${title} — Style Reference`);
   L.push("");
+  if (interp?.narrative) {
+    // kalimat pertama narasi jadi tagline (blockquote hijau ala refero).
+    const tagline = interp.narrative.split(/(?<=[.!?])\s/)[0];
+    L.push(`> ${tagline}`);
+    L.push("");
+  }
+  if (interp?.theme) {
+    L.push(`**Theme:** ${interp.theme}`);
+    L.push("");
+  }
   L.push(`> Ekstrak otomatis dari ${d.url}`);
   if (d.requestedUrl && d.redirected && d.requestedUrl !== d.url) L.push(`> Diminta: ${d.requestedUrl} → ${d.url}`);
   if (d.warning) { L.push(`> ⚠️ ${d.warning}`); L.push(""); }
+  L.push("> Sumber pengukuran dinormalisasi; peran & rekomendasi ditafsirkan.");
+  L.push("> Daftar font independen, tidak berpasangan berdasarkan posisi.");
+  L.push("> Contoh HTML adalah rekonstruksi, bukan komponen sumber.");
   L.push("> Nilai CSS di bawah diambil dari source stylesheet & inline style halaman.");
   if (d.library) L.push(`> Styling: **${d.library}**`);
   L.push("");
@@ -36,7 +51,8 @@ export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret")
       L.push("| Warna | Peran |");
       L.push("|-------|-------|");
       for (const [c, role] of Object.entries(interp.colorRoles)) {
-        L.push(`| \`${c}\` | ${role} |`);
+        const named = interp.colorNames?.[c.toLowerCase()];
+        L.push(`| \`${c}\`${named ? ` (\`${named}\`)` : ""} | ${role} |`);
       }
       L.push("");
     }
