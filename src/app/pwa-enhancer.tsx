@@ -91,7 +91,7 @@ export function PwaEnhancer({
           <button
             type="button"
             onClick={install}
-            className="inline-flex items-center gap-2 rounded-full bg-signal-lime px-3.5 py-1.5 font-mono text-xs font-semibold text-ink-well shadow-[0_4px_20px_rgba(168,255,83,0.25)] hover:opacity-90 active:scale-[0.98]"
+            className="inline-flex items-center gap-2 rounded-full bg-signal-lime px-3.5 py-1.5 font-mono text-xs font-semibold text-white shadow-[0_4px_20px_rgba(10,107,77,0.25)] hover:opacity-90 active:scale-[0.98]"
           >
             ↓ Install App
           </button>
