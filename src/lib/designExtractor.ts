@@ -13,8 +13,8 @@
 import * as cheerio from "cheerio";
 import postcss from "postcss";
 import { scrapeUrl } from "@/lib/scraper";
+import { collectCss } from "@/lib/cssCollector";
 
-const MAX_CSS_BYTES = 2_000_000;
 const MAX_LINKS = 8;
 
 export interface DesignTokens {
@@ -43,6 +43,8 @@ export interface DesignResult {
   library?: string;
   tokens: DesignTokens;
   components: ComponentSpec[];
+  css?: string; // CSS mentah gabungan (untuk file tailwind.css/styles.css terpisah)
+  cssSources?: string[];
 }
 
 const WANTED: string[] = [
@@ -70,32 +72,8 @@ const COMPONENTS: ComponentDef[] = [
   { name: "Footer", selectors: ["footer", ".footer", ".site-footer"] },
 ];
 
-async function collectCss(html: string, baseUrl: string): Promise<string> {
-  const $ = cheerio.load(html);
-  let combined = "";
-  $("style").each((_, el) => {
-    combined += ($(el).html() || "") + "\n";
-  });
-  const links: string[] = [];
-  $('link[rel="stylesheet"]').each((_, el) => {
-    const href = $(el).attr("href");
-    if (href) links.push(href);
-  });
-  let fetched = 0;
-  for (const href of links) {
-    if (fetched >= MAX_LINKS) break;
-    try {
-      const abs = new URL(href, baseUrl).toString();
-      const res = await fetch(abs, {
-        headers: { "user-agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!res.ok) continue;
-      const text = await res.text();
-      combined += "\n" + text.slice(0, MAX_CSS_BYTES);
-      fetched++;
-    } catch {}
-  }
+async function collectCssOld(html: string, baseUrl: string): Promise<string> {
+  const { combined } = await collectCss(html, baseUrl);
   return combined;
 }
 
@@ -539,7 +517,8 @@ export async function extractDesign(rawUrl: string): Promise<DesignResult> {
     } catch {}
   }
   const $ = cheerio.load(scraped.mainHtml);
-  const combined = await collectCss(scraped.html, scraped.url);
+  const cssCollected = await collectCss(scraped.html, scraped.url);
+  const combined = cssCollected.combined;
   const rules = parseRules(combined);
   const tokens = extractTokens(rules, $);
   const components: ComponentSpec[] = [];
@@ -557,5 +536,7 @@ export async function extractDesign(rawUrl: string): Promise<DesignResult> {
     library: detectLibrary(scraped.html, $),
     tokens,
     components,
+    css: cssCollected.combined,
+    cssSources: cssCollected.sources,
   };
 }

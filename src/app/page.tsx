@@ -15,6 +15,8 @@ interface ScrapeResponse {
   warning?: string;
   slug?: string;
   downloadUrl?: string;
+  extraFiles?: Array<{ name: string; downloadUrl: string; bytes: number }>;
+  formats?: Partial<Record<"design.md" | "tailwind-v4.css" | "css-variables.css", string>>;
   preview?: string;
   truncated?: boolean;
   totalChars?: number;
@@ -143,7 +145,7 @@ export default function Home() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
-  const [tab, setTab] = useState<"raw" | "rendered">("raw");
+  const [tab, setTab] = useState<"raw" | "rendered" | "tailwind" | "cssvars">("raw");
   const [copied, setCopied] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const howReveal = useReveal(true);
@@ -296,9 +298,12 @@ export default function Home() {
   };
 
   const copyMarkdown = async () => {
-    // kalau truncated, ambil full dari storage biar copy lengkap
-    let text = result?.preview ?? "";
-    if (result?.truncated && result?.downloadUrl) {
+    // kalau tab tailwind/cssvars, copy format itu; kalau truncated, ambil full dari storage
+    let text: string | undefined;
+    if (tab === "tailwind") text = result?.formats?.["tailwind-v4.css"];
+    else if (tab === "cssvars") text = result?.formats?.["css-variables.css"];
+    else text = result?.preview;
+    if (result?.truncated && tab === "raw" && result?.downloadUrl) {
       try {
         const r = await fetch(result.downloadUrl);
         if (r.ok) text = await r.text();
@@ -308,7 +313,7 @@ export default function Home() {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      showToast(result?.truncated ? "Disalin (full) ✓" : "Disalin ✓");
+      showToast(result?.truncated && tab === "raw" ? "Disalin (full) ✓" : "Disalin ✓");
       setTimeout(() => setCopied(false), 1400);
     } catch {
       showToast("Gagal — salin manual");
@@ -633,21 +638,39 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 rounded-full bg-slate-canvas p-1">
+                    <div className="flex items-center gap-1 overflow-x-auto rounded-full bg-slate-canvas p-1">
                       <button
                         type="button"
                         onClick={() => setTab("raw")}
-                        className={`tap-44 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "raw" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "raw" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
                       >
-                        Raw
+                        {mode === "design" ? "DESIGN.md" : "Raw"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTab("rendered")}
-                        className={`tap-44 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "rendered" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "rendered" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
                       >
                         Preview
                       </button>
+                      {mode === "design" && result?.formats?.["tailwind-v4.css"] && (
+                        <button
+                          type="button"
+                          onClick={() => setTab("tailwind")}
+                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "tailwind" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        >
+                          Tailwind v4
+                        </button>
+                      )}
+                      {mode === "design" && result?.formats?.["css-variables.css"] && (
+                        <button
+                          type="button"
+                          onClick={() => setTab("cssvars")}
+                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "cssvars" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        >
+                          CSS Variables
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[11px] text-fog-text">
@@ -676,6 +699,14 @@ export default function Home() {
                       <span className="code-muted">\n\n— terpotong {result.totalChars?.toLocaleString("id-ID")} total, klik “Muat full” atau Download —</span>
                     )}
                   </pre>
+                ) : tab === "tailwind" ? (
+                  <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
+                    {result.formats?.["tailwind-v4.css"] ?? ""}
+                  </pre>
+                ) : tab === "cssvars" ? (
+                  <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
+                    {result.formats?.["css-variables.css"] ?? ""}
+                  </pre>
                 ) : (
                   <div className="rendered-md h-[280px] overflow-auto p-4 sm:h-[340px] sm:p-5">
                     <div dangerouslySetInnerHTML={{ __html: mdToHtml(result.preview ?? "") }} />
@@ -691,7 +722,24 @@ export default function Home() {
             )}
 
             {result?.ok && (
-              <div className="animate-fadeIn flex gap-3">
+              <div className="animate-fadeIn flex flex-col gap-2">
+                {result.extraFiles && result.extraFiles.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-[11px] text-fog-text">File lain:</span>
+                    {result.extraFiles.map((f) => (
+                      <a
+                        key={f.name}
+                        href={f.downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-graphite-hairline px-3 py-1 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                      >
+                        ↓ {f.name} <span className="text-fog-text">({(f.bytes / 1024).toFixed(1)} KB)</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-3">
                 <button onClick={download} className="tap-44 flex-1 justify-center rounded-[4px] bg-signal-lime px-4 py-2.5 font-mono text-sm font-semibold text-ink-well transition-opacity hover:opacity-90">
                   Download
                 </button>
@@ -709,6 +757,7 @@ export default function Home() {
                 >
                   Buka
                 </a>
+                </div>
               </div>
             )}
           </div>
