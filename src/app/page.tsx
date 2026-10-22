@@ -406,7 +406,7 @@ export default function Home() {
       <header className="sticky top-0 z-10 border-b border-steel-border bg-slate-canvas/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 shrink-0 rounded-sm bg-signal-lime" />
+            <span className="inline-block h-3 w-3 shrink-0 rounded-sm bg-[#022c22]" />
             <span className="font-semibold tracking-wide text-sm sm:text-base">
               structur<span className="text-fog-text">_md</span>
             </span>
@@ -587,8 +587,7 @@ export default function Home() {
             </form>
             <div className="border-t border-steel-border/60 bg-white/60 px-4 py-2 sm:px-6">
               <p className="font-mono text-[11px] leading-none text-fog-text">
-                <span className="text-cloud-text">↵ Enter</span> untuk convert ·<span className="hidden sm:inline"> paste &amp; jalan — hasil di bawah</span>
-                <span className="sm:hidden"> hasil di bawah</span>
+                <span className="text-cloud-text">↵ Enter</span> untuk convert
               </p>
             </div>
           </div>
@@ -627,7 +626,7 @@ export default function Home() {
               <span className="h-2 w-2 rounded-full bg-loop-green/70" />
               <span className="ml-2 font-mono text-xs text-fog-text">scraper.ts</span>
             </div>
-            <div ref={logRef} className="h-[280px] overflow-y-auto p-3 font-mono text-[13px] leading-6 sm:h-[340px] sm:p-4 sm:text-sm">
+            <div ref={logRef} className="h-[280px] overflow-y-auto p-3 font-mono text-[13px] leading-6 [word-break:break-word] sm:h-[340px] sm:p-4 sm:text-sm">
               {log.length === 0 ? (
                 <span className="code-muted">
                   # paste URL → Convert <span className="cursor-blink" />
@@ -688,7 +687,7 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 overflow-x-auto rounded-full bg-slate-canvas p-1">
                       <button
                         type="button"
@@ -732,23 +731,10 @@ export default function Home() {
                         </button>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-fog-text">
-                        {(result.preview?.length ?? 0).toLocaleString("id-ID")} chr · {wordCount.toLocaleString("id-ID")} words ·{" "}
-                        <span className="hl hl-ink text-[11px]">{mode === "design" ? "DESIGN.md" : "Scrape.md"}</span>
-                      </span>
-                      {result.truncated && (
-                        <button
-                          type="button"
-                          onClick={loadFullPreview}
-                          disabled={loadingFull}
-                          className="tap-44 rounded-full border border-signal-lime/30 bg-signal-lime/10 px-3 py-1 font-mono text-[11px] font-semibold text-signal-lime hover:bg-signal-lime/15 disabled:opacity-50"
-                        >
-                          {loadingFull ? "..." : "Muat full"}
-                        </button>
-                      )}
-                    </div>
                   </div>
+                  <p className="px-1 pb-1 font-mono text-[11px] text-fog-text sm:px-0">
+                    {(result.preview?.length ?? 0).toLocaleString("id-ID")} chr · {wordCount.toLocaleString("id-ID")} words
+                  </p>
                 </div>
 
                 {/* body */}
@@ -759,6 +745,16 @@ export default function Home() {
                         {mode === "design" ? "DESIGN.md" : "scrape.md"} — raw
                       </span>
                       <div className="flex gap-2">
+                        {result.truncated && (
+                          <button
+                            type="button"
+                            onClick={loadFullPreview}
+                            disabled={loadingFull}
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text disabled:opacity-50"
+                          >
+                            {loadingFull ? "..." : "Muat full"}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={copyMarkdown}
@@ -882,17 +878,18 @@ export default function Home() {
             {result?.ok && (
               <div className="animate-fadeIn flex flex-col gap-2">
                 {result.extraFiles && result.extraFiles.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[11px] text-fog-text">File lain:</span>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {result.extraFiles.map((f) => (
                       <a
                         key={f.name}
                         href={f.downloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-graphite-hairline px-3 py-1 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                        title={f.name}
+                        className="tap-44 flex flex-col items-start gap-0.5 rounded-2xl border border-graphite-hairline px-3 py-2 hover:border-[#a7f3d0]"
                       >
-                        ↓ {f.name} <span className="text-fog-text">({(f.bytes / 1024).toFixed(1)} KB)</span>
+                        <span className="w-full truncate font-mono text-[11px] font-medium text-cloud-text">{f.name}</span>
+                        <span className="font-mono text-[10px] text-fog-text">{(f.bytes / 1024).toFixed(1)} KB</span>
                       </a>
                     ))}
                   </div>
