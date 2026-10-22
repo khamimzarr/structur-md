@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { extractDesign } from "@/lib/designExtractor";
 import { renderDesignMd } from "@/lib/renderDesignMd";
 import { renderTokenFormats } from "@/lib/renderTokens";
+import { renderTokensJson } from "@/lib/renderTokensJson";
 import { interpretDesign, aiEnabled } from "@/lib/aiInterpret";
 import { uploadExtraFiles, type ExtraFile } from "@/lib/uploadExtras";
 import { getServiceClient, getBucket } from "@/lib/supabase";
@@ -53,10 +54,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   let warning: string | undefined;
   let cssRaw: string | undefined;
   let tokens = { tailwindV4: "", cssVariables: "" };
+  let tokensJson = "";
   let interp: import("@/lib/aiInterpret").DesignInterpretation | null = null;
   try {
     const result = await extractDesign(rawUrl);
-    tokens = renderTokenFormats(result);
     // Lapisan AI: narasi + role warna + do/don't + prompt guide (non-fatal).
     interp = await interpretDesign(result);
     md = renderDesignMd(result, interp);
@@ -66,6 +67,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     redirected = (result as unknown as { redirected?: boolean }).redirected;
     warning = (result as unknown as { warning?: string }).warning;
     cssRaw = result.css;
+    tokens = renderTokenFormats(result);
+    tokensJson = renderTokensJson(result, {
+      colorNames: interp?.colorNames,
+      colorDescriptions: interp?.colorRoles,
+      theme: interp?.theme,
+    });
   } catch (err) {
     const m = err instanceof Error ? err.message : "ekstraksi gagal";
     return jsonError(502, `Gagal mengekstrak desain: ${m}`, "DESIGN_ERROR");
@@ -99,6 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const extras: Array<{ name: string; content: string }> = [];
   if (tokens.tailwindV4) extras.push({ name: "tailwind-v4.css", content: tokens.tailwindV4 });
   if (tokens.cssVariables) extras.push({ name: "css-variables.css", content: tokens.cssVariables });
+  if (tokensJson) extras.push({ name: "design-tokens.json", content: tokensJson });
   if (cssRaw?.trim()) extras.push({ name: "styles-raw.css", content: cssRaw });
   if (extras.length) {
     extraFiles = await uploadExtraFiles(supabase, bucket, slug, extras);
@@ -132,6 +140,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         "design.md": md,
         "tailwind-v4.css": tokens.tailwindV4 || undefined,
         "css-variables.css": tokens.cssVariables || undefined,
+        "design-tokens.json": tokensJson || undefined,
       },
       preview: md.slice(0, MAX_PREVIEW) + (md.length > MAX_PREVIEW ? `\n\n---\n*Preview terpotong ${MAX_PREVIEW.toLocaleString("id-ID")} karakter dari ${md.length.toLocaleString("id-ID")} — Download untuk lengkap atau Muat lengkap di preview.*` : ""),
       truncated: md.length > MAX_PREVIEW,

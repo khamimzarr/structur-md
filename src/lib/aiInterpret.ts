@@ -21,6 +21,8 @@ const RETRY_BASE_MS = 1_000;
 export interface DesignInterpretation {
   narrative: string; // 2-3 kalimat mood & karakter visual
   colorRoles: Record<string, string>; // hex -> role (nama -> penjelasan)
+  colorNames?: Record<string, string>; // hex -> nama token bermakna ("#0066cc" -> "apple-blue")
+  theme?: "light" | "dark";
   dos: string[];
   donts: string[];
   prompts: string[]; // agent prompt guide
@@ -57,12 +59,14 @@ ${components || "- (tidak ada detail komponen)"}
 Balas HANYA JSON valid (tanpa markdown fence) dengan struktur:
 {
   "narrative": "2-3 kalimat Bahasa Indonesia menjelaskan mood & karakter visual gaya ini (seperti copywriting desain, bukan daftar nilai)",
+  "theme": "light atau dark",
+  "colorNames": { "<hex>": "nama-token-bermakna-kebab-case (contoh: apple-blue, gallery-white, ink, slate)" },
   "colorRoles": { "<hex>": "<role penggunaannya, 1 kalimat>" },
   "dos": ["5 aturan yang HARUS diikuti saat meniru gaya ini"],
   "donts": ["5 larangan saat meniru gaya ini"],
   "prompts": ["4 prompt siap pakai (Bahasa Indonesia) untuk AI builder (Cursor/v0) membangun section khas gaya ini, sebutkan nilai konkret (hex, px)"]
 }
-Semua teks Bahasa Indonesia. colorRoles hanya untuk warna utama (maks 8).`;
+Semua teks Bahasa Indonesia. colorNames & colorRoles hanya untuk warna utama (maks 8). Nama token harus deskriptif TENTANG PERANNYA (bukan angka/hex), kebab-case, mirip contoh: gallery-white, ink, apple-blue, launch-orange.`;
 }
 
 function extractJson(text: string): DesignInterpretation | null {
@@ -75,6 +79,8 @@ function extractJson(text: string): DesignInterpretation | null {
     const raw = JSON.parse(cleaned.slice(start, end + 1)) as Record<string, unknown>;
     const narrative = typeof raw.narrative === "string" ? raw.narrative : "";
     const colorRolesRaw = raw.colorRoles;
+    const colorNamesRaw = raw.colorNames;
+    const theme = raw.theme === "dark" ? "dark" : raw.theme === "light" ? "light" : undefined;
     const dos = Array.isArray(raw.dos) ? raw.dos.filter((x): x is string => typeof x === "string") : [];
     const donts = Array.isArray(raw.donts) ? raw.donts.filter((x): x is string => typeof x === "string") : [];
     const prompts = Array.isArray(raw.prompts) ? raw.prompts.filter((x): x is string => typeof x === "string") : [];
@@ -84,8 +90,14 @@ function extractJson(text: string): DesignInterpretation | null {
         if (typeof v === "string") colorRoles[k] = v;
       }
     }
+    const colorNames: Record<string, string> = {};
+    if (colorNamesRaw && typeof colorNamesRaw === "object") {
+      for (const [k, v] of Object.entries(colorNamesRaw as Record<string, unknown>)) {
+        if (typeof v === "string") colorNames[k.toLowerCase()] = v;
+      }
+    }
     if (!narrative) return null;
-    return { narrative, colorRoles, dos, donts, prompts };
+    return { narrative, colorRoles, colorNames, theme, dos, donts, prompts };
   } catch {
     return null;
   }

@@ -16,7 +16,7 @@ interface ScrapeResponse {
   slug?: string;
   downloadUrl?: string;
   extraFiles?: Array<{ name: string; downloadUrl: string; bytes: number }>;
-  formats?: Partial<Record<"design.md" | "tailwind-v4.css" | "css-variables.css", string>>;
+  formats?: Partial<Record<"design.md" | "tailwind-v4.css" | "css-variables.css" | "design-tokens.json", string>>;
   preview?: string;
   truncated?: boolean;
   totalChars?: number;
@@ -175,7 +175,7 @@ export default function Home() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
-  const [tab, setTab] = useState<"raw" | "rendered" | "tailwind" | "cssvars">("raw");
+  const [tab, setTab] = useState<"raw" | "rendered" | "tailwind" | "cssvars" | "tokensjson">("raw");
   const [copied, setCopied] = useState(false);
   // URL blob stabil untuk <a download> per format (dibuat saat render).
   const formatBlobCache = useRef<Map<string, string>>(new Map());
@@ -351,6 +351,7 @@ export default function Home() {
     let text: string | undefined;
     if (tab === "tailwind") text = result?.formats?.["tailwind-v4.css"];
     else if (tab === "cssvars") text = result?.formats?.["css-variables.css"];
+    else if (tab === "tokensjson") text = result?.formats?.["design-tokens.json"];
     else text = result?.preview;
     if (result?.truncated && tab === "raw" && result?.downloadUrl) {
       try {
@@ -721,6 +722,15 @@ export default function Home() {
                           CSS Variables
                         </button>
                       )}
+                      {mode === "design" && result?.formats?.["design-tokens.json"] && (
+                        <button
+                          type="button"
+                          onClick={() => setTab("tokensjson")}
+                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "tokensjson" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        >
+                          Design Tokens
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[11px] text-fog-text">
@@ -826,6 +836,33 @@ export default function Home() {
                     </div>
                     <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
                       {result.formats?.["css-variables.css"] ?? ""}
+                    </pre>
+                  </div>
+                ) : tab === "tokensjson" ? (
+                  <div>
+                    <div className="flex items-center justify-between border-b border-steel-border/60 px-3 pt-2 sm:px-4">
+                      <span className="font-mono text-[11px] text-fog-text">design-tokens.json — W3C</span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={copyMarkdown}
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                        >
+                          <CopyIcon /> Copy
+                        </button>
+                        {result.formats?.["design-tokens.json"] && (
+                          <a
+                            href={downloadFormatUrl("design-tokens.json", result.formats["design-tokens.json"])}
+                            download="design-tokens.json"
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-token-amber/40 bg-token-amber/10 px-2.5 font-mono text-[11px] text-token-amber hover:bg-token-amber/15"
+                          >
+                            <DownloadIcon /> .json
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
+                      {result.formats?.["design-tokens.json"] ?? ""}
                     </pre>
                   </div>
                 ) : (
