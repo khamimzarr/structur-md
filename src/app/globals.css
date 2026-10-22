@@ -340,4 +340,10 @@ body {
   .chip { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
   .toggle-btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
   .tap-44 { min-height: 44px; display: inline-flex; align-items: center; }
+
+  /* Elemen interaktif di luar utilitas di atas: tombol install PWA,
+     link GitHub di header, dan tombol nav header. */
+  button, a {
+    min-height: 44px;
+  }
 }

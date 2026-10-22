@@ -98,6 +98,39 @@ export function validateUrl(raw: string): URL {
   return parsed;
 }
 
+// Pola halaman error / anti-bot: kalau konten utamanya cocok pola ini,
+// scrape dinyatakan gagal — bukan 200 dengan markdown berisi teks error.
+// (Contoh nyata: github.com saat rate-limited mengembalikan HTTP 200
+// berisi "Uh oh! There was an error while loading...")
+const ERROR_PAGE_PATTERNS: Array<{ re: RegExp; reason: string }> = [
+  {
+    re: /there was an error while loading\. please reload this page/i,
+    reason: "GitHub menolak akses otomatis (anti-bot). Coba halaman lain atau URL raw (raw.githubusercontent.com).",
+  },
+  {
+    re: /just a moment\.\.\.|enable javascript and cookies to continue|attention required!/i,
+    reason: "Halaman dilindungi Cloudflare — konten tidak bisa diambil otomatis.",
+  },
+  {
+    re: /access to this page has been denied|you have been blocked|unusual traffic from your computer/i,
+    reason: "Situs memblokir akses otomatis — konten tidak bisa diambil.",
+  },
+  {
+    re: /sign in to continue|please log in to continue|log in to continue/i,
+    reason: "Halaman meminta login sebelum menampilkan konten.",
+  },
+];
+
+// Cek judul + teks polos. Hanya gagal bila halaman PENDEK (halaman error
+// anti-bot tipis), supaya artikel yang kebetulan mengutip frasa ini lolos.
+function looksLikeErrorPage(title: string, text: string): string | null {
+  if (text.length > 4000) return null;
+  for (const { re, reason } of ERROR_PAGE_PATTERNS) {
+    if (re.test(title) || re.test(text)) return reason;
+  }
+  return null;
+}
+
 // Ambil path "konten utama" bila ada; fallback ke document.body.
 const MAIN_SELECTORS = [
   "article",
@@ -231,6 +264,12 @@ export async function scrapeUrl(
 
   if (mainHtml.trim().length < 10) {
     throw new ApiError(502, "Halaman tidak mengandung konten yang bisa di-scrape.", "EMPTY_CONTENT");
+  }
+
+  // Deteksi halaman error/anti-bot SEBELUM dijadikan .md.
+  const errorReason = looksLikeErrorPage(title, $("body").text().replace(/\s+/g, " ").trim());
+  if (errorReason) {
+    throw new ApiError(422, errorReason, "ERROR_PAGE_DETECTED");
   }
 
   const redirected = finalUrl !== url.toString();
