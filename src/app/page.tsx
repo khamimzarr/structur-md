@@ -100,6 +100,34 @@ const EXAMPLES = [
   { label: "tailwindcss.com", url: "https://tailwindcss.com" },
 ];
 
+// Ikon kecil untuk tombol Copy / Download (stroke, ala refero).
+function CopyIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <rect x="4.5" y="4.5" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M9.5 2.5h-6a1 1 0 0 0-1 1v6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+function DownloadIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <path d="M7 1.5v7m0 0L4.5 6M7 8.5L9.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M1.5 10.5v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Sisipkan swatch warna sebelum setiap hex di markdown preview (ala refero).
+function withColorSwatches(md: string): string {
+  return md.replace(/(^|[^&#\w])(#[0-9a-fA-F]{6}\b)/g, (_m, pre: string, hex: string) => {
+    return `${pre}<span class="swatch" style="background:${hex}"></span>${hex}`;
+  });
+}
+function mdPreviewHtml(md: string): string {
+  return withColorSwatches(esc(md)).replace(/\n/g, "<br/>");
+}
+
 function useReveal(enabled = true) {
   const [inView, setInView] = useState(false);
   const callbackRef = useCallback(
@@ -149,6 +177,17 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
   const [tab, setTab] = useState<"raw" | "rendered" | "tailwind" | "cssvars">("raw");
   const [copied, setCopied] = useState(false);
+  // URL blob stabil untuk <a download> per format (dibuat saat render).
+  const formatBlobCache = useRef<Map<string, string>>(new Map());
+  const downloadFormatUrl = useCallback((name: string, content: string): string => {
+    const cache = formatBlobCache.current;
+    const cached = cache.get(name);
+    if (cached) return cached;
+    const blob = new Blob([content], { type: name.endsWith(".css") ? "text/css" : "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    cache.set(name, url);
+    return url;
+  }, []);
   const logRef = useRef<HTMLDivElement>(null);
   const howReveal = useReveal(true);
   const histReveal = useReveal(true);
@@ -241,6 +280,14 @@ export default function Home() {
 
         if (mode === "design") {
           pushLine(setLog, `✓ DESIGN.md siap — ${(data.preview?.length ?? 0)}+ karakter`);
+          // Status lapisan AI: sukses = +interpretasi; gagal = fallback data murni.
+          if (data.hasAi) {
+            pushLine(setLog, `✓ interpretasi AI (agnes-3.0-flash) — narasi + role + do/don't + prompt guide`, "ok");
+          } else if (data.aiEnabled) {
+            pushLine(setLog, `! interpretasi AI gagal (timeout/rate-limit) — DESIGN.md versi data murni`, "err");
+          } else {
+            pushLine(setLog, `- lapisan AI nonaktif (env AGNES_API_KEY tidak diset)`, "muted");
+          }
         } else {
           pushLine(setLog, `✓ markdown siap — ${(data.preview?.length ?? 0)}+ karakter`);
         }
@@ -696,20 +743,91 @@ export default function Home() {
 
                 {/* body */}
                 {tab === "raw" ? (
-                  <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
-                    {result.preview}
-                    {result.truncated && (
-                      <span className="code-muted">\n\n— terpotong {result.totalChars?.toLocaleString("id-ID")} total, klik “Muat full” atau Download —</span>
-                    )}
-                  </pre>
+                  <div>
+                    <div className="flex items-center justify-between border-b border-steel-border/60 px-3 pt-2 sm:px-4">
+                      <span className="font-mono text-[11px] text-fog-text">
+                        {mode === "design" ? "DESIGN.md" : "scrape.md"} — raw
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={copyMarkdown}
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                        >
+                          <CopyIcon /> Copy
+                        </button>
+                        {result.downloadUrl && (
+                          <a
+                            href={result.downloadUrl}
+                            download={`${result.slug ?? "output"}.md`}
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-md-violet/40 bg-md-violet/10 px-2.5 font-mono text-[11px] text-md-violet hover:bg-md-violet/15"
+                          >
+                            <DownloadIcon /> .md
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
+                      <span dangerouslySetInnerHTML={{ __html: mdPreviewHtml(result.preview ?? "") }} />
+                      {result.truncated && (
+                        <span className="code-muted">{String.raw`\n\n`}— terpotong {result.totalChars?.toLocaleString("id-ID")} total, klik “Muat full” atau Download —</span>
+                      )}
+                    </pre>
+                  </div>
                 ) : tab === "tailwind" ? (
-                  <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
-                    {result.formats?.["tailwind-v4.css"] ?? ""}
-                  </pre>
+                  <div>
+                    <div className="flex items-center justify-between border-b border-steel-border/60 px-3 pt-2 sm:px-4">
+                      <span className="font-mono text-[11px] text-fog-text">tailwind-v4.css — @theme</span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={copyMarkdown}
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                        >
+                          <CopyIcon /> Copy
+                        </button>
+                        {result.formats?.["tailwind-v4.css"] && (
+                          <a
+                            href={downloadFormatUrl("tailwind-v4.css", result.formats["tailwind-v4.css"])}
+                            download="tailwind-v4.css"
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
+                          >
+                            <DownloadIcon /> .css
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
+                      {result.formats?.["tailwind-v4.css"] ?? ""}
+                    </pre>
+                  </div>
                 ) : tab === "cssvars" ? (
-                  <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
-                    {result.formats?.["css-variables.css"] ?? ""}
-                  </pre>
+                  <div>
+                    <div className="flex items-center justify-between border-b border-steel-border/60 px-3 pt-2 sm:px-4">
+                      <span className="font-mono text-[11px] text-fog-text">css-variables.css — :root</span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={copyMarkdown}
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                        >
+                          <CopyIcon /> Copy
+                        </button>
+                        {result.formats?.["css-variables.css"] && (
+                          <a
+                            href={downloadFormatUrl("css-variables.css", result.formats["css-variables.css"])}
+                            download="css-variables.css"
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
+                          >
+                            <DownloadIcon /> .css
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <pre className="md-preview h-[280px] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-cloud-text sm:h-[340px] sm:p-4">
+                      {result.formats?.["css-variables.css"] ?? ""}
+                    </pre>
+                  </div>
                 ) : (
                   <div className="rendered-md h-[280px] overflow-auto p-4 sm:h-[340px] sm:p-5">
                     <div dangerouslySetInnerHTML={{ __html: mdToHtml(result.preview ?? "") }} />

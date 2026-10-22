@@ -23,6 +23,8 @@
   --color-key-lime: #d9f07c;
   --color-tag-magenta: #e888f8;
   --color-mute-red: #f43f5e;
+  --color-md-violet: #9c9af2;
+  --color-css-cyan: #5fd4f8;
 
   /* --- Tipografi --- */
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -88,6 +90,18 @@ body {
   padding: 12px;
   overflow-x: auto;
   font-size: 13px;
+}
+
+/* Swatch warna inline untuk hex di preview DESIGN.md:
+   token `#a1b2c3` didahului kotak kecil warnanya (ala refero). */
+.md-preview .swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  vertical-align: -1px;
+  margin-right: 4px;
 }
 
 /* ===================== Animations — structur-md ===================== */
