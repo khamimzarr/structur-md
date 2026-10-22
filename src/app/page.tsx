@@ -424,7 +424,7 @@ export default function Home() {
               href="https://github.com/khamimzarr/structur-md"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden rounded-[4px] border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text hover:text-bone-text sm:inline-flex"
+              className="hidden rounded-2xl border border-graphite-hairline px-3 py-1.5 text-sm text-cloud-text hover:text-bone-text sm:inline-flex"
             >
               ★ GitHub
             </a>
@@ -434,7 +434,7 @@ export default function Home() {
               aria-expanded={mobileOpen}
               aria-controls="mobile-drawer"
               onClick={() => setMobileOpen((v) => !v)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-[4px] border border-steel-border text-cloud-text sm:hidden active:scale-[0.97]"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-steel-border text-cloud-text sm:hidden active:scale-[0.97]"
             >
               <span className="relative block h-3.5 w-4" aria-hidden>
                 <span
@@ -481,7 +481,7 @@ export default function Home() {
           </p>
 
           <h1
-            className={`hero-enter mx-auto max-w-4xl text-[30px] font-medium leading-[1.05] tracking-[0.02em] sm:text-5xl md:text-[56px] ${mounted ? "mounted" : ""}`}
+            className={`hero-enter mx-auto max-w-4xl text-[30px] font-semibold leading-[1.05] tracking-tight sm:text-5xl md:text-[56px] ${mounted ? "mounted" : ""}`}
             style={{ transitionDelay: "80ms" }}
           >
             URL apapun → <span className="hl hl-violet">.md</span> instan
@@ -513,7 +513,7 @@ export default function Home() {
                 type="button"
                 onClick={() => setMode(m)}
                 disabled={busy}
-                className={`toggle-btn ${mode === m ? "text-ink-well" : "text-cloud-text hover:text-bone-text"}`}
+                className={`toggle-btn ${mode === m ? "text-white" : "text-fog-text hover:text-bone-text"}`}
               >
                 {m === "scrape" ? "Scrape.md" : "DESIGN.md"}
               </button>
@@ -522,7 +522,7 @@ export default function Home() {
 
           {/* ---------- CLI FRAME — paste URL ---------- */}
           <div
-            className={`hero-enter cli-shell cli-breathe mx-auto mt-6 w-full max-w-[880px] overflow-hidden rounded-[8px] border text-left ${mounted ? "mounted" : ""} ${isValidUrl && !busy ? "border-signal-lime/25" : "border-steel-border"} bg-ink-well`}
+            className={`hero-enter cli-shell cli-breathe mx-auto mt-6 w-full max-w-[880px] overflow-hidden rounded-2xl border text-left ${mounted ? "mounted" : ""} ${isValidUrl && !busy ? "border-signal-lime/25" : "border-steel-border"} bg-ink-well`}
             style={{ transitionDelay: "260ms" }}
           >
             <div className="flex items-center justify-between border-b border-steel-border bg-[#0e0f11] px-3 py-2.5 sm:px-4">
@@ -545,7 +545,7 @@ export default function Home() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4 sm:px-6 sm:pb-4 lg:gap-4">
               <div
-                className={`flex flex-1 items-center gap-2 rounded-[6px] border bg-slate-canvas px-3 py-2 sm:px-4 sm:py-0 sm:h-[56px] lg:h-[64px] transition-colors ${isValidUrl ? "border-signal-lime/30 ring-1 ring-signal-lime/10" : "border-steel-border focus-within:border-graphite-hairline focus-within:ring-1 focus-within:ring-signal-lime/20"}`}
+                className={`flex flex-1 items-center gap-2 rounded-full border bg-slate-canvas px-3 py-2 sm:px-4 sm:py-0 sm:h-[56px] lg:h-[64px] transition-colors ${isValidUrl ? "border-signal-lime/30 ring-1 ring-signal-lime/10" : "border-steel-border focus-within:border-graphite-hairline focus-within:ring-1 focus-within:ring-signal-lime/20"}`}
               >
                 <span className="hidden shrink-0 font-mono text-sm text-signal-lime sm:inline">›</span>
                 <input
@@ -573,19 +573,19 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={busy}
-                className={`inline-flex h-[48px] shrink-0 items-center justify-center gap-2 rounded-[6px] px-7 font-mono text-sm font-semibold transition-all active:scale-[0.98] sm:h-[56px] lg:h-[64px] sm:px-8 lg:px-10 ${busy ? "btn-shimmer bg-signal-lime text-ink-well opacity-90" : "bg-signal-lime text-ink-well hover:opacity-90 hover:shadow-[0_0_22px_rgba(168,255,83,0.25)]"} disabled:opacity-50`}
+                className={`inline-flex h-[48px] shrink-0 items-center justify-center gap-2 rounded-full px-7 font-mono text-sm font-semibold transition-all active:scale-[0.98] sm:h-[56px] lg:h-[64px] sm:px-8 lg:px-10 ${busy ? "btn-shimmer bg-signal-lime text-white opacity-90" : "bg-signal-lime text-white hover:opacity-90 hover:shadow-[0_0_22px_rgba(10,107,77,0.30)]"} disabled:opacity-50`}
               >
                 {busy ? (
                   <>
-                    <span className="h-4 w-4 rounded-full border-2 border-ink-well/30 border-t-ink-well animate-spin-slow" />
-                    ...
+                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin-slow" />
+                    Mengonversi...
                   </>
                 ) : (
                   <>Convert →</>
                 )}
               </button>
             </form>
-            <div className="border-t border-steel-border/60 bg-[#0e0f11]/60 px-4 py-2 sm:px-6">
+            <div className="border-t border-steel-border/60 bg-white/60 px-4 py-2 sm:px-6">
               <p className="font-mono text-[11px] leading-none text-fog-text">
                 <span className="text-cloud-text">↵ Enter</span> untuk convert ·<span className="hidden sm:inline"> paste &amp; jalan — hasil di bawah</span>
                 <span className="sm:hidden"> hasil di bawah</span>
@@ -620,7 +620,7 @@ export default function Home() {
       <section id="tool" className="mx-auto max-w-[1200px] px-4 pb-12 sm:px-6 sm:pb-24">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Terminal log */}
-          <div className="card-lift overflow-hidden rounded-[4px] border border-steel-border bg-ink-well animate-fadeInUp" style={{ animationDelay: "80ms" }}>
+          <div className="card-lift overflow-hidden rounded-2xl border border-steel-border bg-ink-well animate-fadeInUp" style={{ animationDelay: "80ms" }}>
             <div className="flex items-center gap-2 border-b border-steel-border px-4 py-2.5">
               <span className="h-2 w-2 rounded-full bg-mute-red/70" />
               <span className="h-2 w-2 rounded-full bg-key-lime/70" />
@@ -650,7 +650,7 @@ export default function Home() {
           {/* Preview + actions — with tabs */}
           <div className="flex flex-col gap-4" style={{ animationDelay: "140ms" } as React.CSSProperties}>
             {error && (
-              <div className="animate-scaleIn rounded-[4px] border border-mute-red/40 bg-ink-well p-4">
+              <div className="animate-scaleIn rounded-2xl border border-mute-red/40 bg-ink-well p-4">
                 <p className="text-sm font-medium text-mute-red">✕ {error}</p>
                 {result?.warning && result.warning !== error && (
                   <p className="mt-1 font-mono text-xs text-fog-text">{result.warning}</p>
@@ -664,7 +664,7 @@ export default function Home() {
             )}
 
             {result?.warning && !error && (
-              <div className="animate-scaleIn rounded-[4px] border border-amber-400/25 bg-amber-400/10 p-3">
+              <div className="animate-scaleIn rounded-2xl border border-amber-400/25 bg-amber-400/10 p-3">
                 <p className="font-mono text-xs font-medium text-amber-300">⚠ {result.warning}</p>
                 {result.finalUrl && (
                   <p className="mt-1 font-mono text-[11px] text-fog-text break-all">
@@ -675,7 +675,7 @@ export default function Home() {
             )}
 
             {result?.ok ? (
-              <div className="animate-scaleIn flex flex-1 flex-col overflow-hidden rounded-[4px] border border-steel-border bg-ink-well">
+              <div className="animate-scaleIn flex flex-1 flex-col overflow-hidden rounded-2xl border border-steel-border bg-ink-well">
                 {/* header + tabs + stats */}
                 <div className="flex flex-col gap-2 border-b border-steel-border px-3 py-2.5 sm:px-4">
                   <div className="flex items-center justify-between gap-2">
@@ -693,14 +693,14 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setTab("raw")}
-                        className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "raw" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "raw" ? "bg-signal-lime text-white" : "text-fog-text hover:text-bone-text"}`}
                       >
                         {mode === "design" ? "DESIGN.md" : "Raw"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setTab("rendered")}
-                        className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "rendered" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                        className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "rendered" ? "bg-signal-lime text-white" : "text-fog-text hover:text-bone-text"}`}
                       >
                         Preview
                       </button>
@@ -708,7 +708,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={() => setTab("tailwind")}
-                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "tailwind" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "tailwind" ? "bg-signal-lime text-white" : "text-fog-text hover:text-bone-text"}`}
                         >
                           Tailwind v4
                         </button>
@@ -717,7 +717,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={() => setTab("cssvars")}
-                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "cssvars" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "cssvars" ? "bg-signal-lime text-white" : "text-fog-text hover:text-bone-text"}`}
                         >
                           CSS Variables
                         </button>
@@ -726,7 +726,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={() => setTab("tokensjson")}
-                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "tokensjson" ? "bg-signal-lime text-ink-well" : "text-fog-text hover:text-bone-text"}`}
+                          className={`tap-44 shrink-0 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors ${tab === "tokensjson" ? "bg-signal-lime text-white" : "text-fog-text hover:text-bone-text"}`}
                         >
                           Design Tokens
                         </button>
@@ -762,7 +762,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={copyMarkdown}
-                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
                         >
                           <CopyIcon /> Copy
                         </button>
@@ -770,7 +770,7 @@ export default function Home() {
                           <a
                             href={result.downloadUrl}
                             download={`${result.slug ?? "output"}.md`}
-                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-md-violet/40 bg-md-violet/10 px-2.5 font-mono text-[11px] text-md-violet hover:bg-md-violet/15"
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-md-violet/40 bg-md-violet/10 px-2.5 font-mono text-[11px] text-md-violet hover:bg-md-violet/15"
                           >
                             <DownloadIcon /> .md
                           </a>
@@ -792,7 +792,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={copyMarkdown}
-                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
                         >
                           <CopyIcon /> Copy
                         </button>
@@ -800,7 +800,7 @@ export default function Home() {
                           <a
                             href={downloadFormatUrl("tailwind-v4.css", result.formats["tailwind-v4.css"])}
                             download="tailwind-v4.css"
-                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
                           >
                             <DownloadIcon /> .css
                           </a>
@@ -819,7 +819,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={copyMarkdown}
-                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
                         >
                           <CopyIcon /> Copy
                         </button>
@@ -827,7 +827,7 @@ export default function Home() {
                           <a
                             href={downloadFormatUrl("css-variables.css", result.formats["css-variables.css"])}
                             download="css-variables.css"
-                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
                           >
                             <DownloadIcon /> .css
                           </a>
@@ -846,7 +846,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={copyMarkdown}
-                          className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
+                          className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-graphite-hairline px-2.5 font-mono text-[11px] text-cloud-text hover:text-bone-text"
                         >
                           <CopyIcon /> Copy
                         </button>
@@ -854,7 +854,7 @@ export default function Home() {
                           <a
                             href={downloadFormatUrl("design-tokens.json", result.formats["design-tokens.json"])}
                             download="design-tokens.json"
-                            className="tap-44 inline-flex items-center gap-1.5 rounded-[6px] border border-token-amber/40 bg-token-amber/10 px-2.5 font-mono text-[11px] text-token-amber hover:bg-token-amber/15"
+                            className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-token-amber/40 bg-token-amber/10 px-2.5 font-mono text-[11px] text-token-amber hover:bg-token-amber/15"
                           >
                             <DownloadIcon /> .json
                           </a>
@@ -872,7 +872,7 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              <div className="flex flex-1 items-center justify-center rounded-[4px] border border-dashed border-steel-border bg-ink-well p-8 text-center text-fog-text">
+              <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-steel-border bg-ink-well p-8 text-center text-fog-text">
                 <p className="max-w-sm font-mono text-sm">
                   Hasil <span className="hl hl-ink">{mode === "design" ? "DESIGN.md" : "Scrape.md"}</span> muncul di sini.
                 </p>
@@ -898,12 +898,12 @@ export default function Home() {
                   </div>
                 )}
                 <div className="flex gap-3">
-                <button onClick={download} className="tap-44 flex-1 justify-center rounded-[4px] bg-signal-lime px-4 py-2.5 font-mono text-sm font-semibold text-ink-well transition-opacity hover:opacity-90">
+                <button onClick={download} className="tap-44 flex-1 justify-center rounded-full bg-signal-lime px-4 py-2.5 font-mono text-sm font-semibold text-white transition-opacity hover:opacity-90">
                   Download
                 </button>
                 <button
                   onClick={copyMarkdown}
-                  className={`tap-44 flex-1 justify-center rounded-[4px] border px-4 py-2.5 font-mono text-sm transition-colors ${copied ? "border-signal-lime/40 bg-signal-lime/10 text-signal-lime" : "border-graphite-hairline text-cloud-text hover:text-bone-text"}`}
+                  className={`tap-44 flex-1 justify-center rounded-2xl border px-4 py-2.5 font-mono text-sm transition-colors ${copied ? "border-signal-lime/40 bg-signal-lime/10 text-signal-lime" : "border-graphite-hairline text-cloud-text hover:text-bone-text"}`}
                 >
                   {copied ? "✓ Disalin" : "Copy"}
                 </button>
@@ -911,7 +911,7 @@ export default function Home() {
                   href={result.downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="tap-44 flex-1 justify-center rounded-[4px] border border-graphite-hairline px-4 py-2.5 text-center font-mono text-sm text-cloud-text transition-colors hover:text-bone-text"
+                  className="tap-44 flex-1 justify-center rounded-2xl border border-graphite-hairline px-4 py-2.5 text-center font-mono text-sm text-cloud-text transition-colors hover:text-bone-text"
                 >
                   Buka
                 </a>
@@ -962,7 +962,7 @@ export default function Home() {
                 ),
               },
             ].map((s, idx) => (
-              <div key={s.title} className="card-lift rounded-[4px] border border-steel-border bg-ink-well p-6" style={{ transitionDelay: `${idx * 90}ms` } as React.CSSProperties}>
+              <div key={s.title} className="card-lift rounded-2xl border border-steel-border bg-ink-well p-6" style={{ transitionDelay: `${idx * 90}ms` } as React.CSSProperties}>
                 <div className="mb-4 text-2xl text-signal-lime">{s.icon}</div>
                 <h3 className="mb-2 text-xl font-medium">{s.title}</h3>
                 <p className="text-sm leading-relaxed text-fog-text">{s.body}</p>
@@ -981,7 +981,7 @@ export default function Home() {
               onClick={clearHistory}
               disabled={history.length === 0}
               aria-disabled={history.length === 0}
-              className="tap-44 rounded-[4px] border border-graphite-hairline px-3 py-1.5 font-mono text-xs text-cloud-text transition hover:text-bone-text active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-cloud-text"
+              className="tap-44 rounded-2xl border border-graphite-hairline px-3 py-1.5 font-mono text-xs text-cloud-text transition hover:text-bone-text active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-cloud-text"
             >
               Hapus
             </button>
@@ -990,7 +990,7 @@ export default function Home() {
           {historyLoading ? (
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {[0, 1, 2].map((i) => (
-                <li key={i} className="rounded-[4px] border border-steel-border p-3 sm:p-4">
+                <li key={i} className="rounded-2xl border border-steel-border p-3 sm:p-4">
                   <div className="skeleton mb-2 h-4 w-3/4 rounded" />
                   <div className="skeleton mb-4 h-3 w-full rounded" />
                   <div className="skeleton h-7 w-20 rounded" />
@@ -1004,7 +1004,7 @@ export default function Home() {
               {history.map((h, idx) => (
                 <li
                   key={h.slug}
-                  className="card-lift animate-fadeInUp rounded-[4px] border border-steel-border p-3 sm:p-4"
+                  className="card-lift animate-fadeInUp rounded-2xl border border-steel-border p-3 sm:p-4"
                   style={{ animationDelay: `${idx * 70}ms` } as React.CSSProperties}
                 >
                   <p className="mb-1 truncate font-mono text-sm text-bone-text">{h.title}</p>
@@ -1016,7 +1016,7 @@ export default function Home() {
                         href={h.downloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="tap-44 rounded-[4px] bg-signal-lime px-3 py-1 text-xs font-semibold text-ink-well hover:opacity-90"
+                        className="tap-44 rounded-full bg-signal-lime px-3 py-1 text-xs font-semibold text-white hover:opacity-90"
                       >
                         Buka .md
                       </a>

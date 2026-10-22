@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "URL apapun → Scrape.md atau DESIGN.md instan. Tempel link, jadi file siap pakai.",
   applicationName: "Structur-md",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Structur-md" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Structur-md" },
   formatDetection: { telephone: false },
   alternates: { canonical: "/" },
   openGraph: {
@@ -40,8 +40,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#a8ff53",
-  colorScheme: "dark",
+  themeColor: "#ffffff",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
