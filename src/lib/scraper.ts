@@ -123,9 +123,17 @@ const ERROR_PAGE_PATTERNS: Array<{ re: RegExp; reason: string }> = [
 
 // Cek judul + teks polos. Hanya gagal bila halaman PENDEK (halaman error
 // anti-bot tipis), supaya artikel yang kebetulan mengutip frasa ini lolos.
+// Pengecualian: pola yang sangat spesifik (STRONG_ERROR_PATTERNS) dicek tanpa
+// batas panjang — halaman error GitHub menyisipkan frasa khasnya di dalam
+// <body> boilerplate yang besar, jadi threshold panjang justru melindunginya.
+const STRONG_ERROR_PATTERNS = ERROR_PAGE_PATTERNS.slice(0, 1); // GitHub anti-bot saja (paling spesifik)
+
 function looksLikeErrorPage(title: string, text: string): string | null {
+  for (const { re, reason } of STRONG_ERROR_PATTERNS) {
+    if (re.test(title) || re.test(text)) return reason;
+  }
   if (text.length > 4000) return null;
-  for (const { re, reason } of ERROR_PAGE_PATTERNS) {
+  for (const { re, reason } of ERROR_PAGE_PATTERNS.slice(1)) {
     if (re.test(title) || re.test(text)) return reason;
   }
   return null;
