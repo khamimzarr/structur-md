@@ -282,14 +282,17 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
         if (/var\(/.test(fv)) fv = fv.replace(/var\([^)]*\)/g, "").trim();
         // ambil family pertama sebelum koma, buang quote
         const first = fv.split(",")[0].replace(/['"]/g, "").trim();
-        if (first && !/^(inherit|initial|unset|system-ui|ui-| sans-serif|serif|monospace)$/i.test(first) && !first.startsWith("--")) {
-          // simpan "Primary, generic" kalau ada generic fallback
-          const parts = fv.split(",").map((x) => x.replace(/['"]/g, "").trim()).filter(Boolean);
-          const generics = ["sans-serif","serif","monospace","cursive","fantasy","system-ui"];
-          const primary = parts[0];
-          const generic = parts.find((x) => generics.includes(x.toLowerCase()));
-          fonts.add(generic ? `${primary}, ${generic}` : primary);
-        }
+        const parts = fv.split(",").map((x) => x.replace(/['"]/g, "").trim()).filter(Boolean);
+        const generics = ["sans-serif","serif","monospace","cursive","fantasy","system-ui"];
+        // buang part rusak: placeholder, sisa var, angka
+        const clean = parts.filter((x) =>
+          x && !x.includes("<") && !x.includes("--") && !/^\d/.test(x) &&
+          !/^(inherit|initial|unset|value)$/i.test(x)
+        );
+        const primary = clean[0];
+        if (!primary) continue;
+        const generic = clean.find((x) => generics.includes(x.toLowerCase()));
+        fonts.add(generic ? `${primary}, ${generic}` : primary);
       }
       if (k === "border-radius") radius.add(v);
       if (k === "font-size") fontSizes.add(v);
