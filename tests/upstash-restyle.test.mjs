@@ -26,7 +26,7 @@ const checks = [
   // layout
   ["themeColor putih", layout.includes('themeColor: "#ffffff"')],
   ["colorScheme light", layout.includes('colorScheme: "light"')],
-  ["sw cache bumped", sw.includes("structur-md-v5")],
+  ["sw cache bumped", sw.includes("structur-md-v6")],
   // guard warna lama
   ["lime lama dihapus", !css.includes("#a8ff53")],
   ["pink lama dihapus", !css.includes("#fa3abf")],

@@ -336,14 +336,36 @@ export default function Home() {
     await runScrape(url);
   };
 
-  const download = () => {
-    if (!result?.downloadUrl) return;
+  // Download via fetch -> blob -> objectURL. Atribut download pada <a> diabaikan
+  // browser untuk URL cross-origin (Supabase Storage), jadi navigasi/tab baru
+  // terjadi alih-alih menyimpan file. Blob same-origin menyelesaikan itu.
+  const triggerDownload = (url: string, filename: string) => {
     const a = document.createElement("a");
-    a.href = result.downloadUrl;
-    a.download = `${result.slug ?? "output"}.md`;
-    a.target = "_blank";
-    a.rel = "noopener";
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
+  };
+
+  const downloadFromUrl = async (url: string, filename: string) => {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const blob = await r.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      triggerDownload(blobUrl, filename);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+    } catch {
+      // fallback: buka di tab baru daripada gagal diam-diam
+      window.open(url, "_blank", "noopener");
+      showToast("Gagal mengunduh — dibuka di tab baru");
+    }
+  };
+
+  const download = async () => {
+    if (!result?.downloadUrl) return;
+    await downloadFromUrl(result.downloadUrl, `${result.slug ?? "output"}.md`);
   };
 
   const copyMarkdown = async () => {
@@ -763,13 +785,13 @@ export default function Home() {
                           <CopyIcon /> Copy
                         </button>
                         {result.downloadUrl && (
-                          <a
-                            href={result.downloadUrl}
-                            download={`${result.slug ?? "output"}.md`}
+                          <button
+                            type="button"
+                            onClick={() => downloadFromUrl(result.downloadUrl!, `${result.slug ?? "output"}.md`)}
                             className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-md-violet/40 bg-md-violet/10 px-2.5 font-mono text-[11px] text-md-violet hover:bg-md-violet/15"
                           >
                             <DownloadIcon /> .md
-                          </a>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -793,13 +815,13 @@ export default function Home() {
                           <CopyIcon /> Copy
                         </button>
                         {result.formats?.["tailwind-v4.css"] && (
-                          <a
-                            href={downloadFormatUrl("tailwind-v4.css", result.formats["tailwind-v4.css"])}
-                            download="tailwind-v4.css"
+                          <button
+                            type="button"
+                            onClick={() => downloadFromUrl(downloadFormatUrl("tailwind-v4.css", result.formats?.["tailwind-v4.css"] ?? ""), "tailwind-v4.css")}
                             className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
                           >
                             <DownloadIcon /> .css
-                          </a>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -820,13 +842,13 @@ export default function Home() {
                           <CopyIcon /> Copy
                         </button>
                         {result.formats?.["css-variables.css"] && (
-                          <a
-                            href={downloadFormatUrl("css-variables.css", result.formats["css-variables.css"])}
-                            download="css-variables.css"
+                          <button
+                            type="button"
+                            onClick={() => downloadFromUrl(downloadFormatUrl("css-variables.css", result.formats?.["css-variables.css"] ?? ""), "css-variables.css")}
                             className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-css-cyan/40 bg-css-cyan/10 px-2.5 font-mono text-[11px] text-css-cyan hover:bg-css-cyan/15"
                           >
                             <DownloadIcon /> .css
-                          </a>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -847,13 +869,13 @@ export default function Home() {
                           <CopyIcon /> Copy
                         </button>
                         {result.formats?.["design-tokens.json"] && (
-                          <a
-                            href={downloadFormatUrl("design-tokens.json", result.formats["design-tokens.json"])}
-                            download="design-tokens.json"
+                          <button
+                            type="button"
+                            onClick={() => downloadFromUrl(downloadFormatUrl("design-tokens.json", result.formats?.["design-tokens.json"] ?? ""), "design-tokens.json")}
                             className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-token-amber/40 bg-token-amber/10 px-2.5 font-mono text-[11px] text-token-amber hover:bg-token-amber/15"
                           >
                             <DownloadIcon /> .json
-                          </a>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -880,17 +902,16 @@ export default function Home() {
                 {result.extraFiles && result.extraFiles.length > 0 && (
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {result.extraFiles.map((f) => (
-                      <a
+                      <button
                         key={f.name}
-                        href={f.downloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        type="button"
+                        onClick={() => downloadFromUrl(f.downloadUrl, f.name)}
                         title={f.name}
-                        className="tap-44 flex flex-col items-start gap-0.5 rounded-2xl border border-graphite-hairline px-3 py-2 hover:border-[#a7f3d0]"
+                        className="tap-44 flex flex-col items-start gap-0.5 rounded-2xl border border-graphite-hairline px-3 py-2 text-left hover:border-[#a7f3d0]"
                       >
                         <span className="w-full truncate font-mono text-[11px] font-medium text-cloud-text">{f.name}</span>
                         <span className="font-mono text-[10px] text-fog-text">{(f.bytes / 1024).toFixed(1)} KB</span>
-                      </a>
+                      </button>
                     ))}
                   </div>
                 )}
