@@ -109,28 +109,30 @@ export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret")
     L.push("");
   }
 
-  // ---- Tokens: Colors (chrome & content dipisah; tanpa raw dump) ----
+  // ---- Tokens: Colors (satu tabel gabungan; buang warna tanpa role) ----
   L.push("## Tokens — Colors");
   L.push("");
-  const renderColorTable = (colors: string[], label: string) => {
-    if (!colors.length) return;
-    L.push(`### ${label}`);
-    L.push("");
-    L.push("| Name | Hex Value | Token | Role |");
-    L.push("|------|-----------|-------|------|");
-    for (const c of colors) {
-      const named = interp?.colorNames?.[c.toLowerCase()] ?? "—";
-      const role = interp?.colorRoles?.[c.toLowerCase()] ?? "—";
-      const sw = /^#([0-9a-f]{6})$/i.test(c) ? `<span style="background:${c};display:inline-block;width:16px;height:16px"></span>` : "—";
-      L.push(`| ${named === "—" ? "—" : `\`${named}\``} | \`${c}\` ${sw ? `<span style="background:${c};display:inline-block;width:16px;height:16px"></span>` : ""} | ${sw ? `\`${c}\`` : `\`${c}\``} | ${role} |`);
+  const merged: Array<{ hex: string; name: string; role: string }> = [];
+  const seenHex = new Set<string>();
+  const pushColor = (hex: string, role: string) => {
+    if (seenHex.has(hex)) return;
+    const r = interp?.colorRoles?.[hex.toLowerCase()];
+    if (!r) return; // buang warna tanpa role
+    const name = interp?.colorNames?.[hex.toLowerCase()] ?? "—";
+    merged.push({ hex, name, role: r });
+    seenHex.add(hex);
+  };
+  for (const c of d.tokens.chromeColors) pushColor(c, "");
+  for (const c of d.tokens.contentColors) pushColor(c, "");
+  for (const c of d.tokens.colors) pushColor(c, "");
+  if (merged.length) {
+    L.push("| Name | Hex Value | Role |");
+    L.push("|------|-----------|------|");
+    for (const c of merged) {
+      const sw = /^#([0-9a-f]{6})$/i.test(c.hex) ? `<span style="background:${c.hex};display:inline-block;width:16px;height:16px"></span>` : "";
+      L.push(`| ${c.name === "—" ? "—" : `\`${c.name}\``} | \`${c.hex}\` ${sw} | ${c.role} |`);
     }
     L.push("");
-  };
-  renderColorTable(d.tokens.chromeColors, "UI Chrome (background, text, button, border)");
-  renderColorTable(d.tokens.contentColors, "Content & Syntax Highlight");
-  if (!d.tokens.chromeColors.length && !d.tokens.contentColors.length && d.tokens.colors.length) {
-    // fallback: AI tak memisah — tampilkan semua sebagai chrome
-    renderColorTable(d.tokens.colors, "UI Chrome (background, text, button, border)");
   }
 
   // ---- Tokens: Typography (families + openType + type scale fallback) ----
