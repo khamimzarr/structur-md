@@ -19,6 +19,8 @@ const MAX_LINKS = 8;
 
 export interface DesignTokens {
   colors: string[];
+  chromeColors: string[]; // UI chrome: background, text, button, border
+  contentColors: string[]; // content & syntax highlight (blok kode, hl)
   cssVars: Record<string, string>;
   fonts: string[];
   radius: string[];
@@ -153,7 +155,84 @@ function resolveColor(raw: string, vars: Record<string, string>): string {
     const pct = a.endsWith("%") ? parseFloat(a) / 100 : parseFloat(a);
     return `${hex}${toHex(pct * 255)}`;
   }
+  // warna modern: oklch/oklab/lab/lch -> hex
+  const modern = convertModernColor(v);
+  if (modern) return modern;
   return v;
+}
+
+// --- Konversi warna modern (oklch/oklab/lab/lch) ke hex ---
+// Referensi D65, gamma sRGB. Akurasi cukup untuk referensi desain (bukan colorimetry).
+function gammapartial(r: number, g: number, b: number): string | null {
+  const to = (v: number) => {
+    const c = Math.max(0, Math.min(1, v));
+    return Math.round((c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055) * 255);
+  };
+  const R = to(r), G = to(g), B = to(b);
+  if ([R, G, B].some((x) => isNaN(x) || x < 0 || x > 255)) return null;
+  return `#${toHex(R)}${toHex(G)}${toHex(B)}`;
+}
+function convertModernColor(v: string): string | null {
+  let m = v.match(/^oklch\(\s*([\d.]+)%?\s+([\d.]+)\s+([\d.]+)(?:deg)?\s*(?:[\/,]\s*([\d.]+%?))?\s*\)$/);
+  if (m) {
+    const L = parseFloat(m[1]) > 1 ? parseFloat(m[1]) / 100 : parseFloat(m[1]);
+    const C = parseFloat(m[2]);
+    const Hdeg = parseFloat(m[3]);
+    const hr = (Hdeg * Math.PI) / 180;
+    const a = C * Math.cos(hr);
+    const b = C * Math.sin(hr);
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+    const l = l_ ** 3, mm = m_ ** 3, ss = s_ ** 3;
+    const r = +4.0767416621 * l - 3.3077115913 * mm + 0.2309699292 * ss;
+    const g = -1.2684380046 * l + 2.6097574011 * mm - 0.3413193965 * ss;
+    const bb = -0.0041960863 * l - 0.7034186147 * mm + 1.707614701 * ss;
+    const res = gammapartial(r, g, bb);
+    return res ? (m[4] !== undefined && m[4] !== "1" ? res : res) : null;
+  }
+  m = v.match(/^oklab\(\s*([\d.]+)%?\s+([\d.-]+)\s+([\d.-]+)\s*(?:[\/,]\s*([\d.]+%?))?\s*\)$/);
+  if (m) {
+    const L = parseFloat(m[1]) > 1 ? parseFloat(m[1]) / 100 : parseFloat(m[1]);
+    const a = parseFloat(m[2]);
+    const b = parseFloat(m[3]);
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+    const l = l_ ** 3, mm = m_ ** 3, ss = s_ ** 3;
+    const r = +4.0767416621 * l - 3.3077115913 * mm + 0.2309699292 * ss;
+    const g = -1.2684380046 * l + 2.6097574011 * mm - 0.3413193965 * ss;
+    const bb = -0.0041960863 * l - 0.7034186147 * mm + 1.707614701 * ss;
+    return gammapartial(r, g, bb);
+  }
+  m = v.match(/^lab\(\s*([\d.]+)%?\s+([\d.-]+)%?\s+([\d.-]+)%?\s*(?:[\/,]\s*([\d.]+%?))?\s*\)$/);
+  if (m) {
+    // D50 -> D65 (Bradford, approx) lalu XYZ -> sRGB
+    const L = parseFloat(m[1]);
+    const A = parseFloat(m[2]);
+    const B = parseFloat(m[3]);
+    const fy = (L + 16) / 116;
+    const fx = fy + A / 500;
+    const fz = fy - B / 200;
+    const xr = fx ** 3 > 0.008856 ? fx ** 3 : (fx - 16 / 116) / 7.787;
+    const yr = L > 8 ? fy ** 3 : L / 903.3;
+    const zr = fz ** 3 > 0.008856 ? fz ** 3 : (fz - 16 / 116) / 7.787;
+    // D50 white (0.9642,1.0,0.8249) -> D65
+    const X = xr * 0.9642, Y = yr, Z = zr * 0.8249;
+    const r = X * 3.0454273 + Y * -1.1593862 + Z * -0.0837442;
+    const g = X * -0.1136995 + Y * 1.0159506 + Z * 0.0681299;
+    const bb = X * -0.0119251 + Y * -0.0253035 + Z * 1.1477583;
+    return gammapartial(r, g, bb);
+  }
+  m = v.match(/^lch\(\s*([\d.]+)%?\s+([\d.]+)\s+([\d.]+)(?:deg)?\s*\)$/);
+  if (m) {
+    const L = parseFloat(m[1]);
+    const C = parseFloat(m[2]);
+    const Hdeg = parseFloat(m[3]);
+    const hr = (Hdeg * Math.PI) / 180;
+    return convertModernColor(`lab(${L} ${C * Math.cos(hr)} ${C * Math.sin(hr)})`);
+  }
+  return null;
 }
 
 function isColorProp(k: string): boolean {
@@ -163,10 +242,13 @@ function isColorProp(k: string): boolean {
 function extractTokens(rules: { selectors: string[]; decls: Record<string, string> }[], $: cheerio.CheerioAPI): DesignTokens {
   const cssVars: Record<string, string> = {};
   const colors = new Set<string>();
+  const chrome = new Set<string>();
+  const content = new Set<string>();
   const fonts = new Set<string>();
   const radius = new Set<string>();
   const fontSizes = new Set<string>();
   const spacing = new Set<string>();
+  const SYNTAX_SEL = /\b(code|pre|hl|highlight|syntax|token|katex|hljs|prism|shiki)\b/i;
 
   for (const rule of rules) {
     for (const sel of rule.selectors) {
@@ -176,14 +258,22 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
         }
       }
     }
+    const isSyntax = rule.selectors.some((sel) => SYNTAX_SEL.test(sel));
     for (const [k, v] of Object.entries(rule.decls)) {
       if (isColorProp(k)) {
         const c = resolveColor(v, cssVars);
-        if (c && c !== "transparent") colors.add(c);
+        if (c && c !== "transparent") {
+          colors.add(c);
+          if (isSyntax) content.add(c); else chrome.add(c);
+        }
         const m = v.match(/var\(--[\w-]+\)/);
         if (m) {
           const ref = cssVars[m[1]] || "";
-          if (/\b(#|rgb|hsl|oklch|rgba|hsla)/i.test(ref)) colors.add(ref.toLowerCase());
+          if (/\b(#|rgb|hsl|oklch|rgba|hsla)/i.test(ref)) {
+            const rc = resolveColor(ref, cssVars);
+            colors.add(rc);
+            if (isSyntax) content.add(rc); else chrome.add(rc);
+          }
         }
       }
       if (k === "font-family") fonts.add(v);
@@ -196,7 +286,7 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
   $("[style]").each((_, el) => {
     const st = $(el).attr("style") || "";
     const m = st.match(/#([0-9a-f]{3,8})\b/gi);
-    if (m) m.forEach((c) => colors.add(c.toLowerCase()));
+    if (m) m.forEach((c) => { colors.add(c.toLowerCase()); chrome.add(c.toLowerCase()); });
   });
 
   const resolvedVars: Record<string, string> = {};
@@ -263,7 +353,13 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
     return null;
   };
 
-  const cleanScale = (vals: Set<string>, drop: RegExp): string[] => {
+  // snap px ke grid kelipatan 4px (spacing system), buang layout-hack & clamp
+  const snapGrid = (px: number): number | null => {
+    if (px < 0 || px > 400) return null; // spacing negatif = layout hack; > 400 = ukuran kontainer, bukan spacing
+    const snapped = Math.round(px / 4) * 4;
+    return snapped === 0 ? null : Math.max(4, snapped);
+  };
+  const cleanScale = (vals: Set<string>, drop: RegExp, kind: "spacing" | "other"): string[] => {
     const out: string[] = [];
     const seen = new Set<string>();
     for (const raw of vals) {
@@ -277,7 +373,11 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
         const px = toPx(tok);
         if (px !== null) {
           if (px >= 9999) key = "full";
-          else key = `${Math.round(px)}px`;
+          else if (kind === "spacing") {
+            const snapped = snapGrid(px);
+            if (snapped === null) continue; // buang negatif/hack/oversize
+            key = `${snapped}px`;
+          } else key = `${Math.round(px)}px`;
         }
         if (seen.has(key)) continue;
         seen.add(key);
@@ -314,13 +414,18 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
     if (n) deduped.add(n);
   }
 
+  const allDeduped = Array.from(deduped);
+  const chromeNorm = new Set(chrome);
+  const contentNorm = new Set(content);
   return {
-    colors: Array.from(deduped).slice(0, 24),
+    colors: allDeduped.slice(0, 24),
+    chromeColors: allDeduped.filter((c) => chromeNorm.has(c) && !contentNorm.has(c)).slice(0, 16),
+    contentColors: allDeduped.filter((c) => contentNorm.has(c)).slice(0, 12),
     cssVars: resolvedVars,
     fonts: Array.from(fonts).map((f) => f.trim()).filter((f) => f && f !== "inherit").slice(0, 12),
-    radius: cleanScale(radius, /^(inherit|auto|initial)$/i),
-    fontSizes: cleanScale(fontSizes, /^(inherit|auto|initial|100%|75%)$/i),
-    spacing: cleanScale(spacing, /^(auto|inherit)$/i),
+    radius: cleanScale(radius, /^(inherit|auto|initial)$/i, "other"),
+    fontSizes: cleanScale(fontSizes, /^(inherit|auto|initial|100%|75%)$/i, "other"),
+    spacing: cleanScale(spacing, /^(auto|inherit)$/i, "spacing"),
   };
 }
 
@@ -482,7 +587,23 @@ function extractComponent(
     }
   }
 
-  const sampleHtml = $.html(sampleEl).slice(0, 400).replace(/\s+/g, " ");
+  // Potong sample pada batas tag agar tidak ada markup yang putus di tengah.
+  const cutSample = (html: string, max: number): string => {
+    if (html.length <= max) return html;
+    let cut = html.slice(0, max);
+    const lastGt = cut.lastIndexOf(">");
+    if (lastGt > max * 0.5) cut = cut.slice(0, lastGt + 1);
+    // tutup tag yang masih terbuka (stack sederhana)
+    const stack: string[] = [];
+    for (const m of cut.matchAll(/<(\/)?([\w-]+)(?:\s[^>]*)?(\/?)>/g)) {
+      if (m[3] === "/" || /^(br|hr|img|input|meta|link|source)$/i.test(m[2])) continue;
+      if (m[1]) { const i = stack.lastIndexOf(m[2]); if (i >= 0) stack.splice(i, 1); }
+      else stack.push(m[2]);
+    }
+    for (const tag of stack.reverse()) cut += `</${tag}>`;
+    return cut;
+  };
+  const sampleHtml = cutSample($.html(sampleEl).replace(/\s+/g, " "), 400);
   return { name: def.name, selector: selUsed, sample: sampleHtml, styles: decls };
 }
 
