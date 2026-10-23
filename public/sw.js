@@ -1,5 +1,5 @@
 /* structur-md — service worker: offline shell + cache-first for static assets */
-const CACHE = "structur-md-v5";
+const CACHE = "structur-md-v6";
 const SHELL = ["/", "/manifest.json", "/icon-192.png", "/icon-512.png"];
 const CDN_RE = /^https:\/\/[^/]+\.supabase\.co\//;
 
