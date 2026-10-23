@@ -1,7 +1,9 @@
 // ============================================================================
 // lib/renderDesignMd.ts
-// Menyusun hasil ekstraksi desain menjadi dokumen markdown yang menyerupai
-// format DESING.md (tokens terstruktur + komponen dengan nilai CSS terukur).
+// Menyusun hasil ekstraksi desain menjadi dokumen markdown standar Output 1:
+// struktur hierarki tetap (Header metafora, Tokens Colors/Typography/Spacing,
+// Components per peran, Do's & Don'ts, Agent Prompt Guide, Similar Brands).
+// Semua warna dinormalisasi hex; spacing snap grid 4px; tanpa raw CSS dump.
 // ============================================================================
 
 import type { DesignResult } from "./designExtractor.js";
@@ -13,12 +15,15 @@ function fmtDecls(decls: Record<string, string>): string {
 
 export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret").DesignInterpretation | null): string {
   const L: string[] = [];
-  // Heading ala refero: "# <Judul> — Style Reference" + tagline satu kalimat.
+  // Heading ala refero: "# <Judul> — Style Reference" + metafora + theme.
   const title = (d.title || "Untitled").replace(/\s*[|·—-]\s*(GitHub|Homepage|Website).*$/i, "").trim() || "Untitled";
   L.push(`# ${title} — Style Reference`);
   L.push("");
-  if (interp?.narrative) {
-    // kalimat pertama narasi jadi tagline (blockquote hijau ala refero).
+  if (interp?.metaphor) {
+    // metafora satu kalimat dari AI (fallback: kalimat pertama narasi)
+    L.push(`> ${interp.metaphor}`);
+    L.push("");
+  } else if (interp?.narrative) {
     const tagline = interp.narrative.split(/(?<=[.!?])\s/)[0];
     L.push(`> ${tagline}`);
     L.push("");
@@ -31,9 +36,8 @@ export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret")
   if (d.requestedUrl && d.redirected && d.requestedUrl !== d.url) L.push(`> Diminta: ${d.requestedUrl} → ${d.url}`);
   if (d.warning) { L.push(`> ⚠️ ${d.warning}`); L.push(""); }
   L.push("> Sumber pengukuran dinormalisasi; peran & rekomendasi ditafsirkan.");
-  L.push("> Daftar font independen, tidak berpasangan berdasarkan posisi.");
+  L.push("> Spacing dinormalisasi ke grid 4px; warna dinormalisasi ke HEX.");
   L.push("> Contoh HTML adalah rekonstruksi, bukan komponen sumber.");
-  L.push("> Nilai CSS di bawah diambil dari source stylesheet & inline style halaman.");
   if (d.library) L.push(`> Styling: **${d.library}**`);
   L.push("");
   L.push("---");
@@ -53,6 +57,19 @@ export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret")
       for (const [c, role] of Object.entries(interp.colorRoles)) {
         const named = interp.colorNames?.[c.toLowerCase()];
         L.push(`| \`${c}\`${named ? ` (\`${named}\`)` : ""} | ${role} |`);
+      }
+      L.push("");
+    }
+    if (interp.typeScale && Object.keys(interp.typeScale).length) {
+      L.push("### Type Scale");
+      L.push("");
+      L.push("| Peran | Size | Weight | Line-height | Tracking | Kapan dipakai |");
+      L.push("|-------|------|--------|-------------|----------|---------------|");
+      const ORDER = ["caption", "body", "heading-sm", "heading", "heading-lg", "display"];
+      for (const role of ORDER) {
+        const t = interp.typeScale[role];
+        if (!t) continue;
+        L.push(`| **${role}** | \`${t.size}\` | ${t.weight} | ${t.lineHeight} | ${t.tracking} | ${t.role} |`);
       }
       L.push("");
     }
@@ -77,41 +94,46 @@ export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret")
       L.push("");
       L.push("> Prompt siap pakai untuk AI builder (Cursor, v0, Claude) membangun section khas gaya ini.");
       L.push("");
-      for (const p of interp.prompts) {
-        L.push(`- ${p}`);
-      }
+      interp.prompts.forEach((p, i) => {
+        L.push(`${i + 1}. ${p}`);
+      });
+      L.push("");
+    }
+    if (interp.similarBrands.length) {
+      L.push("### Similar Brands");
+      L.push("");
+      for (const b of interp.similarBrands) L.push(`- ${b}`);
       L.push("");
     }
     L.push("---");
     L.push("");
   }
 
-  // ---- Tokens: Colors ----
+  // ---- Tokens: Colors (chrome & content dipisah; tanpa raw dump) ----
   L.push("## Tokens — Colors");
   L.push("");
-  if (d.tokens.colors.length) {
-    L.push("| Value | Swatch |");
-    L.push("|-------|--------|");
-    for (const c of d.tokens.colors) {
-      const sw = /^#([0-9a-f]{6})$/i.test(c) ? c : "";
-      L.push(`| \`${c}\` | ${sw ? `<span style="background:${c};display:inline-block;width:16px;height:16px"></span>` : "—"} |`); // md tabel, swatch bg
+  const renderColorTable = (colors: string[], label: string) => {
+    if (!colors.length) return;
+    L.push(`### ${label}`);
+    L.push("");
+    L.push("| Name | Hex Value | Token | Role |");
+    L.push("|------|-----------|-------|------|");
+    for (const c of colors) {
+      const named = interp?.colorNames?.[c.toLowerCase()] ?? "—";
+      const role = interp?.colorRoles?.[c.toLowerCase()] ?? "—";
+      const sw = /^#([0-9a-f]{6})$/i.test(c) ? `<span style="background:${c};display:inline-block;width:16px;height:16px"></span>` : "—";
+      L.push(`| ${named === "—" ? "—" : `\`${named}\``} | \`${c}\` ${sw ? `<span style="background:${c};display:inline-block;width:16px;height:16px"></span>` : ""} | ${sw ? `\`${c}\`` : `\`${c}\``} | ${role} |`);
     }
     L.push("");
+  };
+  renderColorTable(d.tokens.chromeColors, "UI Chrome (background, text, button, border)");
+  renderColorTable(d.tokens.contentColors, "Content & Syntax Highlight");
+  if (!d.tokens.chromeColors.length && !d.tokens.contentColors.length && d.tokens.colors.length) {
+    // fallback: AI tak memisah — tampilkan semua sebagai chrome
+    renderColorTable(d.tokens.colors, "UI Chrome (background, text, button, border)");
   }
 
-  // ---- Tokens: CSS Variables ----
-  if (Object.keys(d.tokens.cssVars).length) {
-    L.push("## Tokens — CSS Variables (`:root`)");
-    L.push("");
-    L.push("```css");
-    L.push(":root {");
-    for (const [k, v] of Object.entries(d.tokens.cssVars)) L.push(`  ${k}: ${v};`);
-    L.push("}");
-    L.push("```");
-    L.push("");
-  }
-
-  // ---- Tokens: Fonts ----
+  // ---- Tokens: Typography (families + openType + type scale fallback) ----
   if (d.tokens.fonts.length) {
     L.push("## Tokens — Typography");
     L.push("");
@@ -120,19 +142,42 @@ export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret")
     for (const f of d.tokens.fonts) L.push(`- \`${f}\``);
     L.push("");
     if (d.tokens.fontSizes.length) {
-      L.push("### Font size scale");
+      L.push("### Size scale terukur");
       L.push("");
       L.push("| Size |");
       L.push("|------|");
       for (const s of d.tokens.fontSizes) L.push(`| \`${s}\` |`);
       L.push("");
     }
+    if (interp?.typeScale && Object.keys(interp.typeScale).length) {
+      L.push("### Type scale (per peran)");
+      L.push("");
+      L.push("| Peran | Size | Weight | Line-height | Tracking |");
+      L.push("|-------|------|--------|-------------|----------|");
+      const ORDER = ["caption", "body", "heading-sm", "heading", "heading-lg", "display"];
+      for (const role of ORDER) {
+        const t = interp.typeScale[role];
+        if (!t) continue;
+        L.push(`| **${role}** | \`${t.size}\` | ${t.weight} | ${t.lineHeight} | ${t.tracking} |`);
+      }
+      L.push("");
+    }
   }
 
-  // ---- Tokens: Radius & Spacing ----
+  // ---- Tokens: Spacing & Shapes (grid 4px, tanpa nilai negatif) ----
   if (d.tokens.radius.length || d.tokens.spacing.length) {
-    L.push("## Tokens — Shapes & Spacing");
+    L.push("## Tokens — Spacing & Shapes");
     L.push("");
+    L.push("> Base unit: 4px (semua spacing kelipatan grid).");
+    L.push("");
+    if (d.tokens.spacing.length) {
+      L.push("### Spacing scale (margin/padding)");
+      L.push("");
+      L.push("| Value |");
+      L.push("|-------|");
+      for (const s of d.tokens.spacing) L.push(`| \`${s}\` |`);
+      L.push("");
+    }
     if (d.tokens.radius.length) {
       L.push("### Border radius");
       L.push("");
@@ -141,17 +186,9 @@ export function renderDesignMd(d: DesignResult, interp?: import("./aiInterpret")
       for (const r of d.tokens.radius) L.push(`| \`${r}\` |`);
       L.push("");
     }
-    if (d.tokens.spacing.length) {
-      L.push("### Spacing (margin/padding)");
-      L.push("");
-      L.push("| Value |");
-      L.push("|-------|");
-      for (const s of d.tokens.spacing) L.push(`| \`${s}\` |`);
-      L.push("");
-    }
   }
 
-  // ---- Components ----
+  // ---- Components (per peran; sample HTML dipotong pada batas tag) ----
   L.push("## Components");
   L.push("");
   L.push("> Nilai CSS terukur dari selektor komponen — pakai untuk meniru layout.");
