@@ -27,10 +27,10 @@ const checks = [
   ["stack tag tutup", css.includes("stack.reverse")],
   // struktur Output 1 di renderer
   ["header metafora", rd.includes("interp?.metaphor")],
-  ["tabel token 4 kolom", rd.includes("Name | Hex Value | Token | Role")],
+  ["tabel warna gabungan 3 kolom", rd.includes("Name | Hex Value | Role |")],
   ["type scale per peran", rd.includes("caption") && rd.includes("display")],
   ["spacing base unit 4px", rd.includes("Base unit: 4px")],
-  ["chrome vs content table", rd.includes("UI Chrome") && rd.includes("Content & Syntax Highlight")],
+  ["chrome & content digabung satu tabel", rd.includes('pushColor(c, "")') && rd.includes("chromeColors") && rd.includes("contentColors")],
   ["similar brands section", rd.includes("Similar Brands")],
   ["tanpa raw :root dump", !rd.includes("## Tokens — CSS Variables")],
   // prompt AI

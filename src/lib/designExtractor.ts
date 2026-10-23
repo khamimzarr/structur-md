@@ -276,7 +276,21 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
           }
         }
       }
-      if (k === "font-family") fonts.add(v);
+      if (k === "font-family") {
+        // sederhanakan: buang var(...) & fallback berlapis, ambil nama font utama
+        let fv = resolveVar(v, cssVars).trim();
+        if (/var\(/.test(fv)) fv = fv.replace(/var\([^)]*\)/g, "").trim();
+        // ambil family pertama sebelum koma, buang quote
+        const first = fv.split(",")[0].replace(/['"]/g, "").trim();
+        if (first && !/^(inherit|initial|unset|system-ui|ui-| sans-serif|serif|monospace)$/i.test(first) && !first.startsWith("--")) {
+          // simpan "Primary, generic" kalau ada generic fallback
+          const parts = fv.split(",").map((x) => x.replace(/['"]/g, "").trim()).filter(Boolean);
+          const generics = ["sans-serif","serif","monospace","cursive","fantasy","system-ui"];
+          const primary = parts[0];
+          const generic = parts.find((x) => generics.includes(x.toLowerCase()));
+          fonts.add(generic ? `${primary}, ${generic}` : primary);
+        }
+      }
       if (k === "border-radius") radius.add(v);
       if (k === "font-size") fontSizes.add(v);
       if (/^(margin|padding)/.test(k)) spacing.add(v);
@@ -309,24 +323,21 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
         let hasPx = false;
         let ok = true;
         for (const p of parts) {
+          // operand wajib numerik-valid; teks/paren bekas parse dianggap gagal
+          const num = parseFloat(p.replace(/[^\d.+-]/g, ""));
+          if (isNaN(num) || !/^[\d.+-]/.test(p.trim()) || /[a-z]{2,}/i.test(p.replace(/rem$|em$|px$/i, ""))) { ok = false; break; }
           if (p.endsWith("rem") || p.endsWith("em")) {
-            const n = parseFloat(p);
-            if (isNaN(n)) { ok = false; break; }
-            acc *= n * 16;
+            acc *= num * 16;
             hasPx = true;
           } else if (p.endsWith("px")) {
-            const n = parseFloat(p);
-            if (isNaN(n)) { ok = false; break; }
-            acc *= n;
+            acc *= num;
             hasPx = true;
           } else {
-            const n = parseFloat(p);
-            if (isNaN(n)) { ok = false; break; }
-            acc *= n;
+            acc *= num;
           }
         }
-        if (ok) return hasPx ? `${Math.round(acc)}px` : String(Math.round(acc));
-        return expr;
+        if (ok && isFinite(acc)) return hasPx ? `${Math.round(acc)}px` : String(Math.round(acc));
+        return "INVALID";
       }
       // single value like "0.25rem" or "16px"
       const t = expr.trim();
@@ -364,7 +375,7 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
     const seen = new Set<string>();
     for (const raw of vals) {
       const resolved = resolveForScale(raw);
-      if (!resolved || /--tw-/.test(resolved)) continue;
+      if (!resolved || resolved === "INVALID" || /--tw-/.test(resolved)) continue;
       for (const tok of resolved.split(/\s+/).filter(Boolean)) {
         if (drop.test(tok)) continue;
         if (/--tw-/.test(tok)) continue;
@@ -378,6 +389,8 @@ function extractTokens(rules: { selectors: string[]; decls: Record<string, strin
             if (snapped === null) continue; // buang negatif/hack/oversize
             key = `${snapped}px`;
           } else key = `${Math.round(px)}px`;
+        } else if (kind !== "other") {
+          continue; // bukan numerik-valid dgn unit (NaNpx, "*)", "-)") -> buang
         }
         if (seen.has(key)) continue;
         seen.add(key);
@@ -603,6 +616,26 @@ function extractComponent(
     for (const tag of stack.reverse()) cut += `</${tag}>`;
     return cut;
   };
+  // buang value corrupt: <value>, kosong, placeholder, var() unresolved
+  for (const k of Object.keys(decls)) {
+    const v = decls[k];
+    if (!v || v === "<value>" || v.includes("<") || v === '""' || v === "''" || (/var\(--[\w-]+\)/.test(v) && !/\d/.test(v))) {
+      delete decls[k];
+    }
+  }
+  // buang computed style bawaan browser yang tidak relevan (link jadi list-item,
+  // footer jadi table-footer-group, dsb.) — utamakan utility class Tailwind.
+  const BROWSER_DEFAULTS: Record<string, RegExp> = {
+    display: /^(list-item|table-footer-group|table-header-group|table-row-group|table-row|table-cell|table-column|table-caption|ruby|ruby-text|contents)$/,
+    "vertical-align": /^(baseline|sub|super|text-top|text-bottom|middle|top|bottom)$/,
+    "text-transform": /^(none)$/,
+    "border-width": /^(medium|thin|thick)$/,
+    "border-style": /^(none|hidden)$/,
+    "list-style": /^(disc|decimal|none outside|outside)$/,
+  };
+  for (const [prop, rx] of Object.entries(BROWSER_DEFAULTS)) {
+    if (rx.test(decls[prop] ?? "")) delete decls[prop];
+  }
   const sampleHtml = cutSample($.html(sampleEl).replace(/\s+/g, " "), 400);
   return { name: def.name, selector: selUsed, sample: sampleHtml, styles: decls };
 }
